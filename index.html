@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Snapcan — Photobooth</title>
+<title>Snapcan — Newspaper Photobooth</title>
 <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 /* ─── RESET & ROOT ─────────────────────────────────────────── */
@@ -157,7 +157,7 @@ body{
 .cam-corner.tr{top:6px;right:6px;border-top:2px solid var(--red);border-right:2px solid var(--red)}
 .cam-corner.bl{bottom:6px;left:6px;border-bottom:2px solid var(--red);border-left:2px solid var(--red)}
 .cam-corner.br{bottom:6px;right:6px;border-bottom:2px solid var(--red);border-right:2px solid var(--red)}
-#video{width:100%;height:100%;object-fit:cover;display:block}
+#video{width:100%;height:100%;object-fit:cover;display:block;transform:none;-webkit-transform:none}
 .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:30;transition:opacity .05s}
 .flash.go{opacity:1}
 #cdown-wrap{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:20;background:rgba(0,0,0,.6);backdrop-filter:blur(2px)}
@@ -338,7 +338,7 @@ body{
 }
 .layout-thumb.sel .layout-sel-dot{display:block}
 
-/* ─── MOBILE STICKY BOTTOM BAR ───────────────────────────────── */
+
 @media(max-width:900px){
   .mobile-sticky{
     position:fixed;bottom:0;left:0;right:0;z-index:100;
@@ -479,6 +479,7 @@ body{
           </div>
         </div>
 
+
         <div class="timer-sel-wrap">
           <span>⏱</span>
           <select id="timer-sel">
@@ -572,7 +573,7 @@ body{
     <div class="panel">
       <div class="panel-hd">
         <span>📰 Pilih Layout</span>
-        <span class="panel-hd-badge">22 Pilihan</span>
+        <span class="panel-hd-badge">35 Pilihan</span>
       </div>
       <div class="layout-scroll" id="layout-grid"></div>
     </div>
@@ -624,11 +625,12 @@ body{
   <div class="footer-rule"></div>
   <div class="footer-meta">
     The Daily Photographic Chronicle &mdash; Est. MCMXXIV<br>
-    ✦ &nbsp; Foto Kenangan Bergaya Koran &nbsp; ✦<br>
+    ✦ &nbsp; Beri saya masukan dan bantu dalam pengembangan &nbsp; ✦<br>
     <span id="footer-year"></span>
   </div>
   <div class="footer-ornament" style="margin-top:12px;margin-bottom:0">✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦</div>
 </footer>
+
 <script>
 // ══════════════════════════════════════════════════════════════
 // STATE
@@ -729,65 +731,36 @@ function lorem(n=120){
   let result='';while(result.length<n)result+=pool+' ';return result.substring(0,n)+'...';
 }
 
-// Draw a dense text column with drop cap option
+// Draw a dense text column — first word bold, rest normal
 function textColumn(ctx,text,x,y,W,lh,maxH,font,dropcap=false){
   ctx.save();
-  ctx.font=font;ctx.fillStyle='#1a1208';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillStyle='#1a1208';ctx.textAlign='left';ctx.textBaseline='top';
   const words=text.split(' ').filter(Boolean);
   if(!words.length){ctx.restore();return y;}
 
-  if(dropcap&&words.length>0){
-    const letter=words[0][0]||'';
-    const rest=words[0].substring(1);
+  // Build bold font: same size but bold weight
+  const boldFont=font.replace(/^(italic\s+)?/,'$1bold ');
 
-    // Cap spans exactly 3 lines for better proportion
-    const capLines=3;
-    const capH=lh*capLines;
-    // fontSize so the actual cap height (≈72% of em) equals capH
-    const capFontSize=Math.round(capH/0.72);
-
-    // Draw drop cap — textBaseline='top' so it starts exactly at y
-    ctx.save();
-    ctx.font=`900 ${capFontSize}px "Playfair Display",serif`;
-    ctx.textBaseline='top';
-    ctx.fillStyle='#1a1208';
-    ctx.fillText(letter,x,y);
-    const capW=ctx.measureText(letter).width;
-    // thin vertical rule to the right of the cap as separator
-    ctx.fillStyle='rgba(139,105,20,.5)';
-    ctx.fillRect(x+capW+2,y+2,1,capH-4);
-    ctx.restore();
-
-    const bodyX=x+capW+7; // gap: capW + rule(1) + margin(4)
-    const bodyW=W-capW-7;
-
-    ctx.font=font;ctx.fillStyle='#1a1208';ctx.textAlign='left';ctx.textBaseline='top';
-    let line='',yy=y,lineN=0;
-    const allWords=[rest,...words.slice(1)].filter(Boolean);
-    for(const w of allWords){
-      const isNextToCAP=lineN<capLines;
-      const currX=isNextToCAP?bodyX:x;
-      const currW=isNextToCAP?bodyW:W;
-      const t=line?line+' '+w:w;
-      if(ctx.measureText(t).width>currW&&line){
-        ctx.fillText(line,currX,yy);
-        line=w;yy+=lh;lineN++;
-        if(yy+lh>maxH)break;
-      } else line=t;
+  // Draw first word bold on its own, then continue body
+  let yy=y;
+  if(words.length>0){
+    ctx.font=boldFont;
+    const fw=words[0];
+    const fwW=ctx.measureText(fw).width;
+    if(fwW<=W){
+      ctx.fillText(fw,x,yy);
     }
-    if(line&&yy+lh<=maxH){
-      ctx.fillText(line,lineN<capLines?bodyX:x,yy);
-      yy+=lh;
-    }
-    ctx.restore();return yy;
+    yy+=lh;
   }
 
-  // Normal column (no dropcap)
-  let line='',yy=y;
-  for(const w of words){
-    const t=line?line+' '+w:w;
+  // Rest of words as normal body text
+  ctx.font=font;
+  let line='';
+  for(let i=1;i<words.length;i++){
+    if(yy+lh>maxH)break;
+    const t=line?line+' '+words[i]:words[i];
     if(ctx.measureText(t).width>W&&line){
-      ctx.fillText(line,x,yy);line=w;yy+=lh;if(yy+lh>maxH)break;
+      ctx.fillText(line,x,yy);line=words[i];yy+=lh;
     } else line=t;
   }
   if(line&&yy+lh<=maxH)ctx.fillText(line,x,yy);
@@ -2461,7 +2434,7 @@ async render(ctx,I){
   const tg=ctx.createLinearGradient(0,0,W,0);
   tg.addColorStop(0,'#ff3c78');tg.addColorStop(.5,'#00dcd4');tg.addColorStop(1,'#7828dc');
   ctx.fillStyle=tg;ctx.textAlign='center';ctx.textBaseline='top';
-  ctx.fillText('Snap Neon by Snapcan',W/2,botY+24);
+  ctx.fillText('Kenangan Dalam Cahaya Neon',W/2,botY+24);
 
   ctx.font='9px "Courier Prime",monospace';
   ctx.fillStyle='rgba(255,255,255,.35)';
@@ -2571,7 +2544,7 @@ async render(ctx,I){
 
   ctx.font='900 18px "Playfair Display",serif';
   ctx.fillStyle='#ff85a1';ctx.textAlign='center';ctx.textBaseline='top';
-  ctx.fillText('Give feedback and help us develop ♡',W/2,footY+14);
+  ctx.fillText('Momen Indah Abadi ♡',W/2,footY+14);
 
   ctx.font='8.5px "Courier Prime",monospace';
   ctx.fillStyle='#aaa';
@@ -2619,10 +2592,10 @@ async render(ctx,I){
   ctx.font='900 52px "Playfair Display",serif';
   ctx.fillStyle='#111';ctx.textAlign='left';ctx.textBaseline='top';
   // Drop shadow
-  ctx.fillStyle='rgba(0,0,0,.08)';ctx.fillText('SNAP!CAN!',14,hlY+3);
-  ctx.fillStyle='#111';ctx.fillText('SNAP!CAN',12,hlY);
+  ctx.fillStyle='rgba(0,0,0,.08)';ctx.fillText('SNAP!SNAP!',14,hlY+3);
+  ctx.fillStyle='#111';ctx.fillText('SNAP!SNAP!',12,hlY);
   ctx.font='900 52px "Playfair Display",serif';
-  // ctx.fillStyle='#e8374a';ctx.fillText('CAN',12,hlY+56);
+  // ctx.fillStyle='#e8374a';ctx.fillText('ABADI',12,hlY+56);
 
   // Accent line
   ctx.fillStyle='#e8374a';ctx.fillRect(12,hlY+116,80,4);
@@ -2635,9 +2608,9 @@ async render(ctx,I){
   // Sub-headline
   ctx.font='bold 15px "Playfair Display",serif';
   ctx.fillStyle='#222';ctx.textAlign='left';ctx.textBaseline='top';
-  ctx.fillText('4 Frames ,One story',14,bodyY);
+  ctx.fillText('Empat Bingkai, Satu Cerita',14,bodyY);
   ctx.font='8.5px "Libre Baskerville",serif';ctx.fillStyle='#666';
-  wrapText(ctx,'Every captured moment becomes a silent witness to a priceless life journey..',14,bodyY+20,W-28,13,bodyY+52);
+  wrapText(ctx,'Every captured moment becomes a silent witness to a priceless life journey.',14,bodyY+20,W-28,13,bodyY+52);
 
   // ── 3 SMALL PHOTOS in asymmetric grid
   const gY=bodyY+60;
@@ -2779,7 +2752,7 @@ async render(ctx,I){
 
     // Pink accent top bar
     ctx.fillStyle=accent||'#ff85a1';
-    ctx.beginPath();ctx.roundRect(x,y,w,6,{upperLeft:6,upperRight:6,lowerLeft:0,lowerRight:0});
+    ctx.beginPath();ctx.roundRect(x,y,w,6,[6,6,0,0]);
     ctx.fill();
 
     // Photo
@@ -2848,8 +2821,12 @@ async render(ctx,I){
 
 // ── 19: GOLDEN HOUR — 6 foto warm yellow lifestyle ────────────
 {name:'GOLDEN HOUR',W:640,H:1320,photosRequired:6,
-async render(ctx,I){
+async render(ctx,I,o){
   const W=this.W,H=this.H;
+  // Use custom text from inputs, with sensible defaults
+  const title=(o&&o.hl?o.hl:'GOLDEN HOUR').toUpperCase();
+  const subtitle=o&&o.sub?o.sub:'Hidup terlalu indah untuk tidak diabadikan';
+  const caption=o&&o.cap?o.cap:'Snapcan Golden Hour Edition';
   const now=new Date();
   const dateStr=now.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
 
@@ -2890,14 +2867,17 @@ async render(ctx,I){
   ctx.font='7px "Courier Prime",monospace';ctx.fillStyle='rgba(245,197,24,.6)';
   ctx.fillText('PHOTOBOOTH',PAD,34);
 
-  // Main title
-  ctx.font='900 38px "Playfair Display",serif';
+  // Main title — auto-shrink font to fit width
+  let titleFontSize=38;
+  ctx.font=`900 ${titleFontSize}px "Playfair Display",serif`;
+  while(titleFontSize>18&&ctx.measureText(title).width>W-PAD*2-70){
+    titleFontSize--;ctx.font=`900 ${titleFontSize}px "Playfair Display",serif`;
+  }
   ctx.textAlign='center';ctx.textBaseline='middle';
-  // Gold gradient text
   const tg=ctx.createLinearGradient(0,0,W,0);
   tg.addColorStop(0,'#f5c518');tg.addColorStop(.5,'#fff7d0');tg.addColorStop(1,'#e8a800');
   ctx.fillStyle=tg;
-  ctx.fillText('GOLDEN HOUR',W/2,37);
+  ctx.fillText(title,W/2,37);
 
   // Right side: edition
   ctx.font='bold 8px "Courier Prime",monospace';
@@ -2966,11 +2946,13 @@ async render(ctx,I){
   const heroW=W-PAD*2, heroH=240;
   filmFrame(I[2],PAD,r2y,heroW,heroH,'✦  GOLDEN MOMENT  ✦','#f5c518');
 
-  // "GOLDEN HOUR" text watermark on hero
+  // Title watermark on hero — uses custom title
   ctx.save();ctx.globalAlpha=.12;
-  ctx.font='900 42px "Playfair Display",serif';
+  let wmFontSize=42;
+  ctx.font=`900 ${wmFontSize}px "Playfair Display",serif`;
+  while(wmFontSize>16&&ctx.measureText(title).width>heroW-20){wmFontSize-=2;ctx.font=`900 ${wmFontSize}px "Playfair Display",serif`;}
   ctx.fillStyle='#f5c518';ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText('GOLDEN HOUR',W/2,r2y+heroH/2);
+  ctx.fillText(title,W/2,r2y+heroH/2);
   ctx.restore();
 
   // Row 3: 3 equal square frames
@@ -2987,13 +2969,15 @@ async render(ctx,I){
   ctx.fillStyle='#1a1208';ctx.fillRect(PAD,qY,W-PAD*2,2);
   ctx.fillStyle='#f5c518';ctx.fillRect(PAD,qY+4,W-PAD*2,1);
 
+  // Subtitle quote — from inp-sub
   ctx.font='italic 13px "Playfair Display",serif';
   ctx.fillStyle='#8b6914';ctx.textAlign='center';ctx.textBaseline='top';
-  ctx.fillText('"Use snapcan for best experience"',W/2,qY+12);
+  const subDisplay=subtitle.length>60?subtitle.substring(0,58)+'…':subtitle;
+  ctx.fillText('"'+subDisplay+'"',W/2,qY+12);
 
-  // Author line
+  // Caption — from inp-cap
   ctx.font='8px "Courier Prime",monospace';ctx.fillStyle='#c8a020';
-  ctx.fillText('— Snapcan Golden Hour Edition',W/2,qY+30);
+  ctx.fillText('— '+caption,W/2,qY+30);
 
   // ── FOOTER — full black bar
   const footY=qY+50;
@@ -3010,7 +2994,7 @@ async render(ctx,I){
   const fg=ctx.createLinearGradient(0,0,W,0);
   fg.addColorStop(0,'#f5c518');fg.addColorStop(.5,'#fff7d0');fg.addColorStop(1,'#e8a800');
   ctx.fillStyle=fg;ctx.textAlign='center';ctx.textBaseline='top';
-  ctx.fillText('GOLDEN HOUR  ✦  SNAPCAN',W/2,footY+12);
+  ctx.fillText(title+'  ✦  SNAPCAN',W/2,footY+12);
 
   ctx.font='8.5px "Courier Prime",monospace';ctx.fillStyle='rgba(245,197,24,.6)';
   ctx.fillText('Dibuat dengan ♥ dan Gratis  ·  snapcan.photo',W/2,footY+40);
@@ -3297,6 +3281,966 @@ async render(ctx,I){
   ctx.font='8px "Courier Prime",monospace';ctx.fillStyle='rgba(60,120,30,.6)';
   ctx.textAlign='right';
   ctx.fillText(new Date().toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}),W-PAD,H-8);
+}},
+
+// ── 22: AURORA — iridescent gradient 4 foto ──────────────────
+{name:'AURORA',W:600,H:1080,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+  // Deep space bg
+  ctx.fillStyle='#050818';ctx.fillRect(0,0,W,H);
+  // Aurora gradient layers
+  [[W*.2,H*.1,W*.8,'rgba(100,40,255,.28)'],[W*.8,H*.3,W*.7,'rgba(0,200,200,.22)'],
+   [W*.1,H*.7,W*.6,'rgba(255,0,150,.2)'],[W*.9,H*.8,W*.5,'rgba(0,255,180,.18)']].forEach(([gx,gy,gr,gc])=>{
+    const g=ctx.createRadialGradient(gx,gy,0,gx,gy,gr);
+    g.addColorStop(0,gc);g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  });
+  // Star field
+  ctx.save();
+  for(let i=0;i<120;i++){
+    const sx=Math.random()*W,sy=Math.random()*H,ss=Math.random()*1.5+.3;
+    ctx.globalAlpha=Math.random()*.7+.1;ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.arc(sx,sy,ss,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;ctx.restore();
+
+  const PAD=16,GAP=8,now=new Date();
+  const dateStr=now.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}).toUpperCase();
+
+  // Header
+  const hg=ctx.createLinearGradient(0,0,W,0);
+  hg.addColorStop(0,'#9b59b6');hg.addColorStop(.5,'#00e5cc');hg.addColorStop(1,'#ff006e');
+  ctx.fillStyle=hg;ctx.fillRect(0,0,W,58);
+  ctx.font='900 26px "Playfair Display",serif';ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('✦ AURORA ✦',W/2,20);
+  ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='rgba(255,255,255,.7)';
+  ctx.fillText('SNAPCAN  ·  '+dateStr,W/2,40);
+  ctx.font='bold 7px "Courier Prime",monospace';ctx.fillStyle='rgba(255,255,255,.5)';
+  ctx.fillText('4 SHOTS',W/2,52);
+
+  // 4 photos with iridescent borders
+  const pw=W-PAD*2, ph=Math.floor((H-58-PAD-GAP*3)/4);
+  const colors=[['#9b59b6','#00e5cc'],['#ff006e','#ffd700'],['#00e5cc','#9b59b6'],['#ffd700','#ff006e']];
+  for(let i=0;i<4;i++){
+    const py=58+PAD/2+i*(ph+GAP);
+    // Glow border
+    ctx.save();
+    ctx.shadowColor=colors[i][0];ctx.shadowBlur=16;
+    const bg=ctx.createLinearGradient(PAD,py,PAD+pw,py+ph);
+    bg.addColorStop(0,colors[i][0]);bg.addColorStop(1,colors[i][1]);
+    ctx.strokeStyle=bg;ctx.lineWidth=2.5;ctx.strokeRect(PAD,py,pw,ph);
+    ctx.restore();
+    drawPhoto(ctx,I[i],PAD+2,py+2,pw-4,ph-4,0);
+    // Iridescent overlay on photo
+    ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=.08;
+    const ov=ctx.createLinearGradient(PAD,py,PAD+pw,py+ph);
+    ov.addColorStop(0,colors[i][0]);ov.addColorStop(1,colors[i][1]);
+    ctx.fillStyle=ov;ctx.fillRect(PAD+2,py+2,pw-4,ph-4);
+    ctx.globalCompositeOperation='source-over';ctx.restore();
+    // Photo number
+    ctx.save();ctx.shadowColor=colors[i][0];ctx.shadowBlur=8;
+    ctx.font='bold 9px "Courier Prime",monospace';ctx.fillStyle=colors[i][0];ctx.textAlign='right';ctx.textBaseline='top';
+    ctx.fillText('0'+(i+1),PAD+pw-6,py+6);
+    ctx.restore();
+  }
+}},
+
+// ── 23: FILM NOIR — monochrome cinematic 4 foto ───────────────
+{name:'FILM NOIR',W:580,H:1060,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+  ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,W,H);
+  // Film grain
+  ctx.save();
+  for(let i=0;i<W*H*.005;i++){
+    const g=Math.random()*60|0;ctx.globalAlpha=Math.random()*.2;
+    ctx.fillStyle=`rgb(${g},${g},${g})`;ctx.fillRect(Math.random()*W,Math.random()*H,1.5,1.5);
+  }
+  ctx.globalAlpha=1;ctx.restore();
+
+  const PAD=20,GAP=6,now=new Date();
+
+  // Header — classic film title card
+  ctx.fillStyle='#f5f5f0';ctx.fillRect(0,0,W,72);
+  ctx.fillStyle='#0a0a0a';ctx.fillRect(0,0,W,4);ctx.fillRect(0,68,W,4);
+  ctx.font='900 italic 34px "Playfair Display",serif';ctx.fillStyle='#0a0a0a';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('FILM NOIR',W/2,30);
+  ctx.font='8px "Courier Prime",monospace';
+  ctx.fillText('A  SNAPCAN  PRODUCTION  ·  '+now.getFullYear(),W/2,52);
+  ctx.fillText('DIRECTED BY YOU',W/2,63);
+
+  // 4 photos — B&W with vignette
+  const pw=W-PAD*2, ph=Math.floor((H-72-PAD-GAP*3)/4);
+  for(let i=0;i<4;i++){
+    const py=72+PAD/2+i*(ph+GAP);
+    if(I[i]){
+      drawPhoto(ctx,I[i],PAD,py,pw,ph,0);
+      // B&W desaturate overlay
+      ctx.save();ctx.globalCompositeOperation='saturation';
+      ctx.fillStyle='#808080';ctx.fillRect(PAD,py,pw,ph);
+      ctx.globalCompositeOperation='multiply';ctx.globalAlpha=.6;
+      ctx.fillStyle='#1a1a1a';ctx.fillRect(PAD,py,pw,ph);
+      ctx.globalCompositeOperation='source-over';ctx.restore();
+    } else {
+      ctx.fillStyle='#1a1a1a';ctx.fillRect(PAD,py,pw,ph);
+    }
+    // Vignette on each photo
+    const vg=ctx.createRadialGradient(PAD+pw/2,py+ph/2,ph*.1,PAD+pw/2,py+ph/2,ph*.7);
+    vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.65)');
+    ctx.fillStyle=vg;ctx.fillRect(PAD,py,pw,ph);
+    // White border
+    ctx.strokeStyle='rgba(245,245,240,.6)';ctx.lineWidth=1;ctx.strokeRect(PAD,py,pw,ph);
+    // Scene number
+    ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='rgba(245,245,240,.5)';
+    ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('SC.'+(i+1).toString().padStart(2,'0'),PAD+6,py+6);
+  }
+  // Footer
+  ctx.fillStyle='#f5f5f0';ctx.fillRect(0,H-20,W,20);
+  ctx.font='7px "Courier Prime",monospace';ctx.fillStyle='#0a0a0a';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('© SNAPCAN PRODUCTIONS  ·  ALL RIGHTS RESERVED  ·  '+now.getFullYear(),W/2,H-10);
+}},
+
+// ── 24: CANDY POP — bubbly pastel pop art 4 foto ─────────────
+{name:'CANDY POP',W:580,H:1060,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+  // Hot pink bg
+  ctx.fillStyle='#ff3fa4';ctx.fillRect(0,0,W,H);
+  // Polka dots
+  ctx.save();ctx.globalAlpha=.18;
+  for(let row=0;row*28<H;row++)for(let col=0;col*28<W;col++){
+    if((row+col)%2===0){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(col*28+14,row*28+14,7,0,Math.PI*2);ctx.fill();}
+  }
+  ctx.globalAlpha=1;ctx.restore();
+
+  const PAD=14,GAP=10,now=new Date();
+
+  // Header — comic style speech bubble shape
+  ctx.fillStyle='#fff200';ctx.fillRect(0,0,W,68);
+  ctx.fillStyle='#ff3fa4';ctx.fillRect(0,0,W,4);ctx.fillRect(0,64,W,4);
+  // Zigzag top
+  ctx.fillStyle='#ff3fa4';ctx.beginPath();ctx.moveTo(0,0);
+  for(let x=0;x<W;x+=20){ctx.lineTo(x+10,8);ctx.lineTo(x+20,0);}
+  ctx.lineTo(W,0);ctx.closePath();ctx.fill();
+  ctx.font='900 32px "Playfair Display",serif';ctx.fillStyle='#ff3fa4';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.strokeStyle='#fff';ctx.lineWidth=4;ctx.strokeText('CANDY POP!',W/2,40);
+  ctx.fillText('CANDY POP!',W/2,40);
+  ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='#ff3fa4';ctx.textBaseline='bottom';
+  ctx.fillText('✦ SNAPCAN PHOTOBOOTH ✦',W/2,66);
+
+  // 4 photos with thick colored borders
+  const pw=W-PAD*2-8, ph=Math.floor((H-68-PAD-GAP*3)/4);
+  const bColors=['#fff200','#00e5ff','#ff3fa4','#7fff00'];
+  for(let i=0;i<4;i++){
+    const py=68+PAD/2+i*(ph+GAP);
+    // Offset shadow
+    ctx.fillStyle='#c2006e';ctx.fillRect(PAD+8,py+6,pw,ph);
+    // White mat
+    ctx.fillStyle='#fff';ctx.fillRect(PAD,py,pw+4,ph+2);
+    drawPhoto(ctx,I[i],PAD+4,py+4,pw-4,ph-6,0);
+    // Color border
+    ctx.strokeStyle=bColors[i];ctx.lineWidth=5;ctx.strokeRect(PAD,py,pw+4,ph+2);
+    // Number sticker
+    ctx.fillStyle=bColors[i];ctx.beginPath();ctx.arc(PAD+pw+2,py,14,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+    ctx.font='900 10px "Playfair Display",serif';ctx.fillStyle='#ff3fa4';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(i+1,PAD+pw+2,py);
+  }
+}},
+
+// ── 25: LOVE LETTER — romantic red & cream 4 foto ─────────────
+{name:'LOVE LETTER',W:600,H:1100,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+  // Aged paper bg
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#fdf6ee');bg.addColorStop(1,'#f5e8d8');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  // Subtle lined paper
+  ctx.save();ctx.strokeStyle='rgba(200,170,140,.25)';ctx.lineWidth=.7;
+  for(let y=32;y<H;y+=22){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.restore();
+  // Red margin line
+  ctx.strokeStyle='rgba(180,40,40,.3)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(48,0);ctx.lineTo(48,H);ctx.stroke();
+
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+  // Header — handwritten letter style
+  ctx.font='italic 11px "Libre Baskerville",serif';ctx.fillStyle='#8b3a3a';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText(dateStr,56,14);
+  ctx.font='italic 10px "Libre Baskerville",serif';ctx.fillStyle='rgba(100,50,50,.5)';
+  ctx.fillText('To you, my dearest ♡',56,30);
+  // Big decorative heart
+  ctx.font='48px serif';ctx.textAlign='right';ctx.fillStyle='#cc2244';ctx.fillText('♥',W-18,8);
+
+  // Divider with hearts
+  ctx.fillStyle='#cc2244';ctx.fillRect(56,52,W-70,1);
+  ['♡','♥','♡','♥','♡'].forEach((h,i)=>{
+    ctx.font='10px serif';ctx.textAlign='center';ctx.fillStyle='#cc2244';ctx.fillText(h,100+i*90,46);
+  });
+
+  // 2x2 photo grid — polaroid style
+  const cw=(W-56-10-10)/2, ch=210;
+  const gx=[56,56+cw+10], gy=[64,64+ch+40];
+  for(let i=0;i<4;i++){
+    const px=gx[i%2], py=gy[Math.floor(i/2)];
+    // Shadow
+    ctx.fillStyle='rgba(150,80,80,.15)';ctx.fillRect(px+5,py+5,cw,ch+30);
+    // White polaroid
+    ctx.fillStyle='#fff';ctx.fillRect(px,py,cw,ch+30);
+    ctx.strokeStyle='rgba(180,100,100,.2)';ctx.lineWidth=1;ctx.strokeRect(px,py,cw,ch+30);
+    drawPhoto(ctx,I[i],px+6,py+6,cw-12,ch-6,.04);
+    // Heart on bottom
+    ctx.font='14px serif';ctx.fillStyle='#cc2244';ctx.textAlign='center';ctx.fillText('♥',px+cw/2,py+ch+16);
+  }
+
+  // Love quote
+  const qy=gy[1]+ch+52;
+  ctx.fillStyle='rgba(139,58,58,.15)';ctx.fillRect(56,qy,W-70,60);
+  ctx.strokeStyle='#cc2244';ctx.lineWidth=1;ctx.strokeRect(56,qy,W-70,60);
+  ctx.font='italic 13px "Playfair Display",serif';ctx.fillStyle='#8b2222';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('"Every moment with you is a treasure"',W/2,qy+20);
+  ctx.font='italic 9px "Libre Baskerville",serif';ctx.fillStyle='#cc2244';
+  ctx.fillText('— with love, always ♡',W/2,qy+40);
+
+  // Footer
+  ctx.font='italic 9px "Libre Baskerville",serif';ctx.fillStyle='rgba(100,50,50,.4)';ctx.textBaseline='bottom';
+  ctx.fillText('Yours forever  ·  Snapcan Photobooth',W/2,H-8);
+}},
+
+// ── 26: VAPORWAVE — 80s retro aesthetic 4 foto ───────────────
+{name:'VAPORWAVE',W:600,H:1080,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+  // Gradient bg — classic vaporwave
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#1a0035');bg.addColorStop(.5,'#3d0068');bg.addColorStop(1,'#200040');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  // Grid floor
+  ctx.save();ctx.strokeStyle='rgba(255,0,200,.25)';ctx.lineWidth=.8;
+  const gridY=H*.72;
+  for(let x=-W;x<W*2;x+=30){ctx.beginPath();ctx.moveTo(x,gridY);ctx.lineTo(W/2,H);ctx.stroke();}
+  for(let y=gridY;y<H;y+=18){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.restore();
+  // Sun
+  const sg=ctx.createLinearGradient(W/2-80,H*.35,W/2+80,H*.58);
+  sg.addColorStop(0,'#ff6ec7');sg.addColorStop(.5,'#ff9d00');sg.addColorStop(1,'#ff006e');
+  ctx.fillStyle=sg;ctx.beginPath();ctx.arc(W/2,H*.5,72,0,Math.PI*2);ctx.fill();
+  // Sun stripes
+  ctx.fillStyle='#3d0068';
+  [.38,.46,.53,.59,.64].forEach(t=>{ctx.fillRect(W/2-72,H*.5+72*t-3,144,5);});
+
+  const PAD=16,GAP=8,now=new Date();
+
+  // Header
+  ctx.font='900 28px "Playfair Display",serif';ctx.textAlign='center';ctx.textBaseline='top';
+  const tg=ctx.createLinearGradient(0,0,W,0);
+  tg.addColorStop(0,'#ff6ec7');tg.addColorStop(.5,'#00ffff');tg.addColorStop(1,'#ff6ec7');
+  ctx.fillStyle=tg;ctx.fillText('VAPORWAVE',W/2,10);
+  ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='rgba(255,110,200,.7)';
+  ctx.fillText('S  N  A  P  C  A  N    P  H  O  T  O  B  O  O  T  H',W/2,44);
+  ctx.font='7px "Courier Prime",monospace';ctx.fillStyle='rgba(0,255,255,.5)';
+  ctx.fillText(now.getFullYear()+'  ·  A E S T H E T I C  E D I T I O N',W/2,56);
+
+  // 2x2 grid with neon borders
+  const pw=(W-PAD*2-GAP)/2, ph=Math.floor((H-68-PAD-GAP)/2);
+  const neons=[['#ff6ec7','#9b00ff'],['#00ffff','#ff006e'],['#9b00ff','#00ffff'],['#ff006e','#ff6ec7']];
+  for(let i=0;i<4;i++){
+    const col=i%2, row=Math.floor(i/2);
+    const px=PAD+col*(pw+GAP), py=68+row*(ph+GAP);
+    ctx.save();
+    ctx.shadowColor=neons[i][0];ctx.shadowBlur=14;
+    const nbg=ctx.createLinearGradient(px,py,px+pw,py+ph);
+    nbg.addColorStop(0,neons[i][0]);nbg.addColorStop(1,neons[i][1]);
+    ctx.strokeStyle=nbg;ctx.lineWidth=3;ctx.strokeRect(px,py,pw,ph);
+    ctx.restore();
+    drawPhoto(ctx,I[i],px+3,py+3,pw-6,ph-6,0);
+    // Color grade
+    ctx.save();ctx.globalCompositeOperation='multiply';ctx.globalAlpha=.2;
+    ctx.fillStyle=neons[i][0];ctx.fillRect(px+3,py+3,pw-6,ph-6);
+    ctx.globalCompositeOperation='source-over';ctx.restore();
+    // Retro label
+    ctx.font='bold 7px "Courier Prime",monospace';ctx.fillStyle=neons[i][0];ctx.textAlign='left';ctx.textBaseline='bottom';
+    ctx.fillText(['A','B','C','D'][i]+'.EXE',px+6,py+ph-4);
+  }
+}},
+
+// ── 27: FOREVER US — couple love theme 4 foto ─────────────────
+{name:'FOREVER US',W:580,H:1080,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+  // Warm white bg
+  ctx.fillStyle='#fefcfa';ctx.fillRect(0,0,W,H);
+  // Soft watercolor wash
+  [[W*.1,H*.05,180,'rgba(255,200,210,.2)'],[W*.9,H*.1,160,'rgba(255,220,180,.18)'],
+   [W*.5,H*.5,200,'rgba(255,210,220,.12)'],[W*.05,H*.9,150,'rgba(255,180,200,.15)']].forEach(([gx,gy,gr,gc])=>{
+    const g=ctx.createRadialGradient(gx,gy,0,gx,gy,gr);g.addColorStop(0,gc);g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  });
+
+  const now=new Date();
+  const PAD=18;
+
+  // Decorative border
+  ctx.strokeStyle='rgba(200,100,130,.2)';ctx.lineWidth=8;ctx.strokeRect(4,4,W-8,H-8);
+  ctx.strokeStyle='rgba(200,100,130,.15)';ctx.lineWidth=1;ctx.strokeRect(14,14,W-28,H-28);
+
+  // Header — elegant script feel
+  ctx.font='900 italic 36px "Playfair Display",serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  ctx.fillStyle='rgba(180,60,90,.12)';ctx.fillText('Forever Us',W/2+2,56+2);
+  ctx.fillStyle='#b83c5a';ctx.fillText('Forever Us',W/2,56);
+  ctx.font='8px "Courier Prime",monospace';ctx.fillStyle='rgba(180,60,90,.5)';ctx.textBaseline='top';
+  ctx.fillText('✦  A LOVE STORY IN FOUR FRAMES  ✦',W/2,62);
+
+  // Divider with hearts
+  const heartLine=(y)=>{
+    ctx.fillStyle='rgba(180,60,90,.25)';ctx.fillRect(PAD,y,W-PAD*2,1);
+    [W*.25,W*.5,W*.75].forEach(hx=>{
+      ctx.font='10px serif';ctx.fillStyle='#e05070';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('♥',hx,y);
+    });
+  };
+  heartLine(74);
+
+  // 4 photos — elegant frames
+  const pw=W-PAD*2, ph=180;
+  const labels=['Our beginning','This moment','Just us','Always & forever'];
+  for(let i=0;i<4;i++){
+    const py=84+i*(ph+34);
+    // Elegant shadow
+    ctx.fillStyle='rgba(180,60,90,.08)';ctx.fillRect(PAD+4,py+4,pw,ph);
+    // White frame
+    ctx.fillStyle='#fff';ctx.fillRect(PAD-2,py-2,pw+4,ph+4);
+    ctx.strokeStyle='rgba(200,100,130,.3)';ctx.lineWidth=1;ctx.strokeRect(PAD-2,py-2,pw+4,ph+4);
+    drawPhoto(ctx,I[i],PAD,py,pw,ph,.04);
+    // Warm overlay
+    ctx.save();ctx.globalCompositeOperation='multiply';ctx.globalAlpha=.1;
+    ctx.fillStyle='#ffccd5';ctx.fillRect(PAD,py,pw,ph);
+    ctx.globalCompositeOperation='source-over';ctx.restore();
+    // Caption below
+    ctx.font='italic 10px "Libre Baskerville",serif';ctx.fillStyle='#b83c5a';ctx.textAlign='center';ctx.textBaseline='top';
+    ctx.fillText('— '+labels[i]+' —',W/2,py+ph+6);
+    ctx.font='8px serif';ctx.fillStyle='rgba(180,60,90,.4)';ctx.fillText('♥',W/2,py+ph+20);
+  }
+  // Footer
+  ctx.font='italic 9px "Libre Baskerville",serif';ctx.fillStyle='rgba(180,60,90,.35)';ctx.textBaseline='bottom';
+  ctx.fillText('"Some stories are forever"  ·  Snapcan',W/2,H-10);
+}},
+
+// ── 28: ARCADE — retro pixel game aesthetic 4 foto ────────────
+{name:'ARCADE',W:580,H:1060,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+  ctx.fillStyle='#10002b';ctx.fillRect(0,0,W,H);
+  // Pixel grid overlay
+  ctx.save();ctx.strokeStyle='rgba(255,255,255,.04)';ctx.lineWidth=.5;
+  for(let x=0;x<W;x+=8){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=8){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.restore();
+
+  const now=new Date(),PAD=14,GAP=8;
+
+  // Header — arcade cabinet style
+  ctx.fillStyle='#1a0050';ctx.fillRect(0,0,W,72);
+  ctx.fillStyle='#ff0055';ctx.fillRect(0,0,W,4);ctx.fillRect(0,68,W,4);
+  // Pixel border top
+  const pxColors=['#ff0055','#ff6e00','#fff200','#00ff55','#00e5ff','#9b00ff'];
+  pxColors.forEach((c,i)=>{ctx.fillStyle=c;ctx.fillRect(i*Math.floor(W/6),0,Math.floor(W/6),4);});
+  ctx.font='900 28px "Playfair Display",serif';ctx.fillStyle='#fff200';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.strokeStyle='#ff0055';ctx.lineWidth=3;ctx.strokeText('ARCADE',W/2,30);ctx.fillText('ARCADE',W/2,30);
+  ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='rgba(255,255,255,.6)';
+  ctx.fillText('INSERT COIN  ·  SNAPCAN PHOTOBOOTH  ·  '+now.getFullYear(),W/2,55);
+  ctx.font='7px "Courier Prime",monospace';ctx.fillStyle='rgba(255,110,0,.7)';
+  ctx.fillText('PLAYER 1  READY!',W/2,66);
+
+  // 4 photos with pixel-art style borders
+  const pw=W-PAD*2, ph=Math.floor((H-72-PAD-GAP*3)/4);
+  const pcols=['#ff0055','#fff200','#00e5ff','#00ff55'];
+  for(let i=0;i<4;i++){
+    const py=72+PAD/2+i*(ph+GAP);
+    // Pixel border — dashed segments
+    ctx.fillStyle='#1a0050';ctx.fillRect(PAD-4,py-4,pw+8,ph+8);
+    const seg=8;
+    for(let x=PAD-4;x<PAD+pw+4;x+=seg*2){ctx.fillStyle=pcols[i];ctx.fillRect(x,py-4,seg,4);ctx.fillRect(x,py+ph,seg,4);}
+    for(let y=py-4;y<py+ph+4;y+=seg*2){ctx.fillStyle=pcols[i];ctx.fillRect(PAD-4,y,4,seg);ctx.fillRect(PAD+pw,y,4,seg);}
+    drawPhoto(ctx,I[i],PAD,py,pw,ph,0);
+    // Score label
+    ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle=pcols[i];ctx.textAlign='right';ctx.textBaseline='top';
+    const scores=['1UP','HI','2UP','★★★'];ctx.fillText(scores[i],PAD+pw-6,py+6);
+  }
+  // Bottom ticker
+  ctx.fillStyle='#ff0055';ctx.fillRect(0,H-14,W,14);
+  ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='#fff200';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('GAME  OVER  —  THANKS  FOR  PLAYING  —  SNAPCAN  —  ',0,H-7);
+}},
+
+// ── 29: HEARTS & FLOWERS — soft romantic 4 foto ───────────────
+{name:'HEARTS & FLOWERS',W:580,H:1080,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+  // Soft lavender bg
+  const bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#fce4ec');bg.addColorStop(.5,'#f3e5f5');bg.addColorStop(1,'#fce4ec');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  // Draw a simple flower
+  const flower=(x,y,r,c1,c2)=>{
+    for(let i=0;i<6;i++){const a=i*Math.PI/3;ctx.fillStyle=c1;ctx.beginPath();ctx.ellipse(x+Math.cos(a)*r*.6,y+Math.sin(a)*r*.6,r*.45,r*.28,a,0,Math.PI*2);ctx.fill();}
+    ctx.fillStyle=c2;ctx.beginPath();ctx.arc(x,y,r*.35,0,Math.PI*2);ctx.fill();
+  };
+  // Background flowers
+  [[40,60,18,'rgba(255,182,193,.6)','rgba(255,105,135,.7)'],
+   [W-40,100,16,'rgba(216,191,216,.7)','rgba(186,85,211,.6)'],
+   [20,H*.4,14,'rgba(255,182,193,.5)','rgba(255,105,135,.6)'],
+   [W-25,H*.6,15,'rgba(216,191,216,.6)','rgba(186,85,211,.5)'],
+   [W*.5,H-50,20,'rgba(255,182,193,.55)','rgba(255,105,135,.65)']].forEach(args=>flower(...args));
+
+  const now=new Date(),PAD=20,GAP=10;
+
+  // Header
+  ctx.font='900 30px "Playfair Display",serif';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillStyle='rgba(180,60,120,.15)';ctx.fillText('With Love',W/2+2,16+2);
+  ctx.fillStyle='#c2185b';ctx.fillText('With Love',W/2,16);
+  ctx.font='8px "Courier Prime",monospace';ctx.fillStyle='rgba(194,24,91,.5)';
+  ctx.fillText('✿  SNAPCAN  ·  HEARTS & FLOWERS EDITION  ✿',W/2,52);
+  // Flower divider
+  ctx.fillStyle='rgba(194,24,91,.2)';ctx.fillRect(PAD,64,W-PAD*2,1);
+  flower(PAD+20,64,10,'rgba(255,182,193,.8)','#ff85b0');flower(W-PAD-20,64,10,'rgba(216,191,216,.8)','#d48ad4');
+  flower(W/2,64,10,'rgba(255,182,193,.8)','#ff85b0');
+
+  // 4 photos
+  const pw=W-PAD*2, ph=Math.floor((H-74-PAD-GAP*3)/4);
+  const accents=['#f48fb1','#ce93d8','#f48fb1','#ce93d8'];
+  for(let i=0;i<4;i++){
+    const py=74+i*(ph+GAP);
+    ctx.fillStyle='rgba(194,24,91,.07)';ctx.fillRect(PAD+4,py+4,pw,ph);
+    ctx.fillStyle='#fff';ctx.fillRect(PAD,py,pw,ph);
+    ctx.strokeStyle=accents[i];ctx.lineWidth=2.5;ctx.strokeRect(PAD,py,pw,ph);
+    drawPhoto(ctx,I[i],PAD+3,py+3,pw-6,ph-6,.04);
+    // Warm tint
+    ctx.save();ctx.globalCompositeOperation='multiply';ctx.globalAlpha=.08;
+    ctx.fillStyle=accents[i];ctx.fillRect(PAD+3,py+3,pw-6,ph-6);
+    ctx.globalCompositeOperation='source-over';ctx.restore();
+    // Corner flower
+    flower(PAD+pw-8,py+8,8,accents[i]+'99','#fff');
+    flower(PAD+8,py+ph-8,7,accents[(i+1)%4]+'aa','#fff');
+  }
+  // Footer
+  ctx.font='italic 9px "Libre Baskerville",serif';ctx.fillStyle='rgba(180,60,120,.4)';ctx.textBaseline='bottom';
+  ctx.fillText('Made with ♥ and flowers  ·  Snapcan',W/2,H-8);
+}},
+
+// ── 30: BRUTALIST — bold black geometric 4 foto ───────────────
+{name:'BRUTALIST',W:600,H:1060,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+  ctx.fillStyle='#f0f0e8';ctx.fillRect(0,0,W,H);
+
+  const now=new Date(),PAD=0,GAP=4;
+
+  // Bold geometric header — full bleed black
+  ctx.fillStyle='#111';ctx.fillRect(0,0,W,80);
+  // Yellow accent block
+  ctx.fillStyle='#ffe600';ctx.fillRect(0,0,W*.38,80);
+  ctx.font='900 42px "Playfair Display",serif';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillStyle='#111';ctx.fillText('BRUT',12,40);
+  ctx.fillStyle='#f0f0e8';
+  ctx.font='900 42px "Playfair Display",serif';ctx.textAlign='right';ctx.fillText('ALIST',W-12,40);
+  // Side label
+  ctx.font='bold 7px "Courier Prime",monospace';ctx.fillStyle='rgba(240,240,232,.5)';ctx.textAlign='center';ctx.textBaseline='bottom';
+  ctx.fillText('SNAPCAN  ·  SYSTEM READY  ·  '+now.getFullYear(),W/2,78);
+
+  // 4 photos — offset brutalist layout
+  const pDefs=[
+    {x:0,y:84,w:W*.6,h:220,a:'#ffe600'},
+    {x:W*.6+GAP,y:84,w:W*.4-GAP,h:220,a:'#ff3300'},
+    {x:0,y:308,w:W*.4-GAP,h:200,a:'#0055ff'},
+    {x:W*.4+GAP,y:308,w:W*.6-GAP,h:200,a:'#111'},
+  ];
+  pDefs.forEach(({x,y,w,h,a},i)=>{
+    drawPhoto(ctx,I[i],x,y,w,h,0);
+    // Thick accent bar
+    ctx.fillStyle=a;ctx.fillRect(x,y+h-10,w,10);
+    // Bold number
+    ctx.font='900 18px "Playfair Display",serif';ctx.fillStyle=a==='#111'?'#ffe600':a;
+    ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('0'+(i+1),x+8,y+8);
+  });
+
+  // Bottom section
+  const botY=512;
+  ctx.fillStyle='#111';ctx.fillRect(0,botY,W,4);
+  ctx.fillStyle='#0055ff';ctx.fillRect(0,botY+4,W*.5,4);
+  ctx.fillStyle='#ffe600';ctx.fillRect(W*.5,botY+4,W*.5,4);
+
+  // Bold quote
+  ctx.font='900 22px "Playfair Display",serif';ctx.fillStyle='#111';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('NO RULES.',12,botY+16);ctx.fillStyle='#ff3300';ctx.fillText('JUST SHOTS.',12,botY+42);
+
+  // Additional photo strip below
+  const stripH=Math.floor((H-botY-85)/2)-GAP;
+  const spw=(W-GAP*3)/4;
+  for(let i=0;i<4;i++){
+    const spy=botY+80, spx=i*(spw+GAP);
+    ctx.fillStyle=['#ffe600','#ff3300','#0055ff','#111'][i];ctx.fillRect(spx,spy-4,spw,4);
+    drawPhoto(ctx,I[i%4],spx,spy,spw,stripH,0);
+  }
+  // Footer bar
+  ctx.fillStyle='#111';ctx.fillRect(0,H-22,W,22);
+  ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='#ffe600';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('SNAPCAN PHOTOBOOTH  —  BRUTALIST EDITION  —  '+now.getFullYear(),10,H-11);
+}},
+
+// ── 31: DREAMY — soft bokeh pastel floating 4 foto ────────────
+{name:'DREAMY',W:580,H:1060,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+  // Soft lilac-to-pink gradient
+  const bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#e8d5f5');bg.addColorStop(.5,'#fce4ec');bg.addColorStop(1,'#dceeff');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  // Bokeh circles
+  ctx.save();
+  const bokeh=[
+    [W*.15,H*.12,55,'rgba(255,150,200,.18)'],[W*.85,H*.08,45,'rgba(150,200,255,.16)'],
+    [W*.7,H*.35,35,'rgba(200,150,255,.15)'],[W*.05,H*.55,50,'rgba(255,200,150,.14)'],
+    [W*.9,H*.7,40,'rgba(150,255,200,.15)'],[W*.5,H*.9,60,'rgba(255,150,200,.16)'],
+    [W*.3,H*.75,30,'rgba(200,150,255,.18)'],[W*.8,H*.5,25,'rgba(255,220,150,.15)'],
+  ];
+  bokeh.forEach(([bx,by,br,bc])=>{
+    const g=ctx.createRadialGradient(bx,by,0,bx,by,br);
+    g.addColorStop(0,bc);g.addColorStop(.7,bc);g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  });
+  // Sparkles
+  ctx.globalAlpha=.5;ctx.font='10px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  [[W*.2,H*.2,'✦','rgba(255,150,200,.7)'],[W*.8,H*.15,'✧','rgba(150,200,255,.7)'],
+   [W*.1,H*.45,'✦','rgba(200,150,255,.6)'],[W*.9,H*.4,'✦','rgba(255,200,150,.7)'],
+   [W*.55,H*.08,'✧','rgba(200,150,255,.7)']].forEach(([sx,sy,st,sc])=>{ctx.fillStyle=sc;ctx.fillText(st,sx,sy);});
+  ctx.globalAlpha=1;ctx.restore();
+
+  const now=new Date(),PAD=18,GAP=9;
+
+  // Header
+  ctx.font='900 italic 30px "Playfair Display",serif';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillStyle='rgba(180,100,200,.2)';ctx.fillText('Dreamy',W/2+2,14+2);
+  ctx.fillStyle='#9b4dca';ctx.fillText('Dreamy',W/2,14);
+  ctx.font='8px "Courier Prime",monospace';ctx.fillStyle='rgba(155,77,202,.5)';
+  ctx.fillText('✦  LIKE A DREAM  ·  SNAPCAN  ✦',W/2,52);
+
+  // 4 photos — rounded soft frames
+  const pw=W-PAD*2, ph=Math.floor((H-66-PAD-GAP*3)/4);
+  const palettes=[
+    ['#f8bbd0','#e1bee7'],['#bbdefb','#b2ebf2'],
+    ['#f8bbd0','#ffe0b2'],['#e1bee7','#dceeff'],
+  ];
+  for(let i=0;i<4;i++){
+    const py=66+i*(ph+GAP);
+    // Soft shadow
+    ctx.fillStyle='rgba(150,100,200,.12)';ctx.fillRect(PAD+5,py+5,pw,ph);
+    // White frame
+    ctx.fillStyle='rgba(255,255,255,.85)';ctx.fillRect(PAD,py,pw,ph);
+    drawPhoto(ctx,I[i],PAD+4,py+4,pw-8,ph-8,0);
+    // Dreamy overlay
+    ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=.06;
+    const pg=ctx.createLinearGradient(PAD,py,PAD+pw,py+ph);
+    pg.addColorStop(0,palettes[i][0]);pg.addColorStop(1,palettes[i][1]);
+    ctx.fillStyle=pg;ctx.fillRect(PAD+4,py+4,pw-8,ph-8);
+    ctx.globalCompositeOperation='source-over';ctx.restore();
+    // Gradient border
+    const bdr=ctx.createLinearGradient(PAD,py,PAD+pw,py+ph);
+    bdr.addColorStop(0,palettes[i][0]);bdr.addColorStop(1,palettes[i][1]);
+    ctx.strokeStyle=bdr;ctx.lineWidth=2;ctx.strokeRect(PAD,py,pw,ph);
+    // Sparkle tag
+    ctx.font='9px serif';ctx.fillStyle=palettes[i][0];ctx.textAlign='right';ctx.textBaseline='top';
+    ctx.fillText('✦',PAD+pw-6,py+6);
+  }
+  ctx.font='italic 9px "Libre Baskerville",serif';ctx.fillStyle='rgba(155,77,202,.35)';ctx.textBaseline='bottom';
+  ctx.fillText('"Float away into the moment"  ·  Snapcan',W/2,H-8);
+}},
+
+// ── 32: STAINED GLASS — cathedral window mosaic 4 foto ────────
+{name:'STAINED GLASS',W:620,H:1120,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // Deep black lead bg
+  ctx.fillStyle='#080808';ctx.fillRect(0,0,W,H);
+
+  // ── Helper: draw a stained glass "lead came" cell
+  function glassCell(x,y,w,h,color,img,idx){
+    // Outer lead border (thick black)
+    ctx.fillStyle='#111';ctx.fillRect(x-3,y-3,w+6,h+6);
+    // Color fill (glass tint)
+    ctx.fillStyle=color;ctx.fillRect(x,y,w,h);
+    // Photo inside
+    if(img){
+      drawPhoto(ctx,img,x,y,w,h,0);
+      // Strong color overlay — stained glass tint
+      ctx.save();ctx.globalCompositeOperation='multiply';ctx.globalAlpha=.55;
+      ctx.fillStyle=color;ctx.fillRect(x,y,w,h);
+      ctx.globalCompositeOperation='source-over';ctx.restore();
+    }
+    // Light glow from behind glass
+    ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=.18;
+    const glow=ctx.createRadialGradient(x+w/2,y+h/2,0,x+w/2,y+h/2,Math.max(w,h)*.7);
+    glow.addColorStop(0,'#fff');glow.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=glow;ctx.fillRect(x,y,w,h);
+    ctx.restore();
+    // Lead lines within cell (decorative)
+    ctx.strokeStyle='rgba(0,0,0,.7)';ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(x+w*.35,y);ctx.lineTo(x+w*.28,y+h*.4);ctx.lineTo(x+w*.5,y+h*.6);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x+w*.7,y);ctx.lineTo(x+w*.65,y+h*.5);ctx.stroke();
+    // Thick lead outline
+    ctx.strokeStyle='#000';ctx.lineWidth=5;ctx.strokeRect(x,y,w,h);
+  }
+
+  const now=new Date(),PAD=8,GAP=5;
+
+  // ── DECORATIVE TOP ARCH header
+  const archH=70;
+  // Rainbow arch at top
+  const archColors=['#cc0000','#ff6600','#ffcc00','#00aa00','#0066ff','#6600cc'];
+  archColors.forEach((c,i)=>{
+    const r=W*.48-i*8;
+    ctx.save();ctx.beginPath();ctx.arc(W/2,archH+20,r,Math.PI,0);ctx.closePath();
+    ctx.fillStyle=c;ctx.fill();ctx.restore();
+  });
+  // Black lead arch overlay
+  ctx.fillStyle='#000';ctx.fillRect(0,0,W,archH-8);
+  ctx.fillStyle='#111';ctx.fillRect(0,archH-8,W,16);
+
+  // Title in arch
+  ctx.font='900 22px "Playfair Display",serif';ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('STAINED GLASS',W/2,archH-30);
+  ctx.font='bold 7px "Courier Prime",monospace';ctx.fillStyle='rgba(255,255,200,.7)';
+  ctx.fillText('✦  SNAPCAN  ·  CATHEDRAL EDITION  ✦',W/2,archH-14);
+
+  // ── MOSAIC PHOTO GRID
+  // Top 2 cells side by side (different heights for drama)
+  const r1y=archH+GAP*2;
+  const c1w=Math.floor(W*.52)-PAD-GAP/2, c2w=W-c1w-PAD*2-GAP;
+  const r1h1=240, r1h2=200;
+
+  glassCell(PAD,r1y,c1w,r1h1,'#cc2244',I[0],0);
+  glassCell(PAD+c1w+GAP,r1y,c2w,r1h2,'#2255cc',I[1],1);
+
+  // ── DECORATIVE DIAMOND ROW between rows
+  const dY=r1y+Math.max(r1h1,r1h2)+GAP*2;
+  const diamondColors=['#ffcc00','#cc0000','#00aa44','#ffcc00','#2244cc','#cc0000','#ffcc00'];
+  const dSize=18;
+  for(let di=0;di<Math.floor(W/(dSize*2.5));di++){
+    const dx=PAD+di*(dSize*2.5), dy2=dY;
+    ctx.save();ctx.translate(dx+dSize,dy2+dSize/2);ctx.rotate(Math.PI/4);
+    ctx.fillStyle=diamondColors[di%diamondColors.length];
+    ctx.fillRect(-dSize/2,-dSize/2,dSize,dSize);
+    ctx.strokeStyle='#000';ctx.lineWidth=2;ctx.strokeRect(-dSize/2,-dSize/2,dSize,dSize);
+    ctx.restore();
+  }
+  // Lead line through diamonds
+  ctx.strokeStyle='#000';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(0,dY);ctx.lineTo(W,dY);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,dY+dSize+4);ctx.lineTo(W,dY+dSize+4);ctx.stroke();
+
+  // Bottom 2 cells
+  const r2y=dY+dSize+GAP*3;
+  const r2h1=220, r2h2=260;
+  const c3w=Math.floor(W*.44)-PAD, c4w=W-c3w-PAD*2-GAP;
+  glassCell(PAD,r2y,c3w,r2h2,'#007744',I[2],2);
+  glassCell(PAD+c3w+GAP,r2y,c4w,r2h1,'#aa5500',I[3],3);
+
+  // ── Corner ornaments
+  const corners=[[14,r1y,'#ffcc00'],[W-14,r1y,'#cc0000'],[14,r2y+r2h2,'#2244cc'],[W-14,r2y+r2h1,'#007744']];
+  corners.forEach(([cx2,cy2,cc2])=>{
+    ctx.fillStyle='#000';ctx.beginPath();ctx.arc(cx2,cy2,10,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=cc2;ctx.beginPath();ctx.arc(cx2,cy2,7,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#000';ctx.lineWidth=1.5;ctx.stroke();
+  });
+
+  // ── FOOTER
+  const footY=r2y+Math.max(r2h1,r2h2)+GAP*2;
+  ctx.fillStyle='#000';ctx.fillRect(0,footY,W,H-footY);
+  // Rainbow footer stripe
+  archColors.forEach((c,i)=>{ctx.fillStyle=c;ctx.fillRect(i*Math.floor(W/6),footY,Math.floor(W/6),4);});
+  ctx.font='bold 10px "Courier Prime",monospace';ctx.fillStyle='#ffcc00';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('✦  SNAPCAN STAINED GLASS EDITION  ·  '+now.getFullYear()+'  ✦',W/2,footY+(H-footY)/2);
+}},
+
+// ── 33: COSMIC DIARY — space scrapbook 6 foto ─────────────────
+{name:'COSMIC DIARY',W:640,H:1340,photosRequired:6,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}).toUpperCase();
+
+  // ── Deep cosmic background
+  ctx.fillStyle='#04060f';ctx.fillRect(0,0,W,H);
+  // Nebula clouds
+  [
+    [W*.15,H*.08,200,'rgba(100,20,180,.18)'],[W*.85,H*.12,180,'rgba(0,100,200,.16)'],
+    [W*.5,H*.38,220,'rgba(180,0,100,.14)'],[W*.1,H*.6,160,'rgba(0,180,150,.12)'],
+    [W*.9,H*.7,190,'rgba(100,0,200,.15)'],[W*.5,H*.9,240,'rgba(200,80,0,.13)'],
+  ].forEach(([gx,gy,gr,gc])=>{
+    const g=ctx.createRadialGradient(gx,gy,0,gx,gy,gr);
+    g.addColorStop(0,gc);g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  });
+  // Stars
+  ctx.save();
+  for(let i=0;i<200;i++){
+    const sx=Math.random()*W,sy=Math.random()*H;
+    const ss=Math.random()*1.8+.2;
+    ctx.globalAlpha=Math.random()*.9+.1;
+    ctx.fillStyle=Math.random()>.7?'#ffd700':Math.random()>.5?'#aaddff':'#ffffff';
+    ctx.beginPath();ctx.arc(sx,sy,ss,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;ctx.restore();
+
+  // Constellation lines (decorative)
+  const stars2=[[W*.1,H*.05],[W*.25,H*.08],[W*.18,H*.14],[W*.35,H*.06],
+                [W*.85,H*.18],[W*.9,H*.11],[W*.78,H*.15]];
+  ctx.save();ctx.strokeStyle='rgba(150,200,255,.15)';ctx.lineWidth=1;
+  ctx.beginPath();stars2.forEach((p,i)=>{i===0?ctx.moveTo(...p):ctx.lineTo(...p);});ctx.stroke();
+  ctx.restore();
+
+  const PAD=16,GAP=8;
+
+  // ── HEADER — spaceship window style
+  ctx.fillStyle='rgba(10,15,40,.9)';ctx.fillRect(0,0,W,72);
+  // Scan line header
+  ctx.save();ctx.globalAlpha=.15;
+  for(let y=0;y<72;y+=3){ctx.fillStyle=y%6===0?'#4488ff':'rgba(0,0,0,0)';ctx.fillRect(0,y,W,2);}
+  ctx.globalAlpha=1;ctx.restore();
+
+  // Glowing title
+  ctx.save();ctx.shadowColor='#4488ff';ctx.shadowBlur=20;
+  ctx.font='900 26px "Playfair Display",serif';ctx.fillStyle='#88ccff';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('✦ COSMIC DIARY ✦',W/2,10);
+  ctx.restore();
+  ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='rgba(100,200,255,.7)';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('SNAPCAN  ·  DEEP SPACE EDITION  ·  6 SHOTS',W/2,42);
+  ctx.font='7px "Courier Prime",monospace';ctx.fillStyle='rgba(100,200,255,.4)';
+  ctx.fillText(dateStr,W/2,56);
+
+  // Scan line separator
+  ctx.save();ctx.shadowColor='#4488ff';ctx.shadowBlur=8;
+  ctx.strokeStyle='rgba(100,200,255,.4)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,72);ctx.lineTo(W,72);ctx.stroke();
+  ctx.restore();
+
+  // ── 6 PHOTOS — asymmetric constellation-like layout
+  // Row 1: full width hero
+  const ph1=200;
+  // Neon frame helper
+  function cosmicFrame(img,x,y,w,h,glowColor,label){
+    // Dark panel bg
+    ctx.fillStyle='#0a0e1f';ctx.fillRect(x,y,w,h);
+    if(img){
+      drawPhoto(ctx,img,x,y,w,h,0);
+      // Space color grade
+      ctx.save();ctx.globalCompositeOperation='multiply';ctx.globalAlpha=.3;
+      ctx.fillStyle='#1a0a3a';ctx.fillRect(x,y,w,h);
+      ctx.globalCompositeOperation='screen';ctx.globalAlpha=.12;
+      ctx.fillStyle=glowColor;ctx.fillRect(x,y,w,h);
+      ctx.globalCompositeOperation='source-over';ctx.restore();
+    }
+    // Glowing border
+    ctx.save();
+    ctx.shadowColor=glowColor;ctx.shadowBlur=12;
+    ctx.strokeStyle=glowColor;ctx.lineWidth=1.5;ctx.strokeRect(x,y,w,h);
+    ctx.restore();
+    // Corner notch details
+    const nc=6;
+    [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(([cx,cy])=>{
+      ctx.strokeStyle=glowColor;ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(cx-(cx>x?nc:0),cy);ctx.lineTo(cx+(cx===x?nc:0),cy);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(cx,cy-(cy>y?nc:0));ctx.lineTo(cx,cy+(cy===y?nc:0));ctx.stroke();
+    });
+    if(label){
+      ctx.save();ctx.shadowColor=glowColor;ctx.shadowBlur=6;
+      ctx.font='bold 7px "Courier Prime",monospace';ctx.fillStyle=glowColor;ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.fillText(label,x+6,y+6);
+      ctx.restore();
+    }
+  }
+
+  const glowColors=['#ff4da6','#4da6ff','#4dff9f','#ffd700','#ff6622','#aa44ff'];
+  const labels=['SHOT.001','SHOT.002','SHOT.003','SHOT.004','SHOT.005','SHOT.006'];
+
+  // Photo 1 — full width
+  cosmicFrame(I[0],PAD,80,W-PAD*2,ph1,glowColors[0],labels[0]);
+
+  // Separator with stars
+  const sep1Y=80+ph1+GAP;
+  ctx.save();ctx.strokeStyle='rgba(100,200,255,.2)';ctx.lineWidth=.5;ctx.setLineDash([4,8]);
+  ctx.beginPath();ctx.moveTo(PAD,sep1Y);ctx.lineTo(W-PAD,sep1Y);ctx.stroke();ctx.setLineDash([]);
+  ctx.restore();
+  // Planet decorations
+  [[W*.22,sep1Y,'rgba(255,100,50,.8)',12],[W*.78,sep1Y,'rgba(100,180,255,.8)',9],[W*.5,sep1Y,'rgba(200,100,255,.8)',7]].forEach(([px,py,pc,pr])=>{
+    ctx.fillStyle=pc;ctx.beginPath();ctx.arc(px,py,pr,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=1;ctx.stroke();
+  });
+
+  // Photos 2+3 — side by side
+  const r2y=sep1Y+GAP*2;
+  const r2w=(W-PAD*2-GAP)/2, r2h=170;
+  cosmicFrame(I[1],PAD,r2y,r2w,r2h,glowColors[1],labels[1]);
+  cosmicFrame(I[2],PAD+r2w+GAP,r2y,r2w,r2h,glowColors[2],labels[2]);
+
+  // Photos 4+5+6 — three in a row
+  const r3y=r2y+r2h+GAP*2;
+  const r3w=Math.floor((W-PAD*2-GAP*2)/3), r3h=155;
+  [I[3],I[4],I[5]].forEach((img,i)=>{
+    cosmicFrame(img,PAD+i*(r3w+GAP),r3y,r3w,r3h,glowColors[i+3],labels[i+3]);
+  });
+
+  // ── QUOTE SECTION
+  const qY=r3y+r3h+16;
+  ctx.save();ctx.shadowColor='#4488ff';ctx.shadowBlur=10;
+  ctx.strokeStyle='rgba(100,200,255,.25)';ctx.lineWidth=1;
+  ctx.strokeRect(PAD,qY,W-PAD*2,42);ctx.restore();
+  ctx.font='italic 11px "Playfair Display",serif';ctx.fillStyle='rgba(150,210,255,.8)';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('"We are made of starstuff — and so are these moments"',W/2,qY+14);
+  ctx.font='7px "Courier Prime",monospace';ctx.fillStyle='rgba(100,200,255,.4)';
+  ctx.fillText('— Snapcan Cosmic Diary',W/2,qY+30);
+
+  // ── FOOTER
+  const footY=qY+50;
+  ctx.fillStyle='rgba(10,15,40,.95)';ctx.fillRect(0,footY,W,H-footY);
+  // Color bar
+  glowColors.forEach((c,i)=>{ctx.fillStyle=c;ctx.fillRect(i*Math.floor(W/6),footY,Math.floor(W/6),3);});
+  ctx.save();ctx.shadowColor='#4488ff';ctx.shadowBlur=8;
+  ctx.font='900 14px "Playfair Display",serif';ctx.fillStyle='#88ccff';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('COSMIC DIARY  ✦  SNAPCAN  ✦  '+now.getFullYear(),W/2,footY+(H-footY)/2);
+  ctx.restore();
+}},
+
+// ── 34: POLAROID PARTY — 6 tilted polaroids scattered ────────
+{name:'POLAROID PARTY',W:660,H:1320,photosRequired:6,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+  const now=new Date();
+
+  // ── CONFETTI background
+  ctx.fillStyle='#fff8f0';ctx.fillRect(0,0,W,H);
+  const confettiColors=['#ff3fa4','#ff9500','#fff200','#00c853','#00b0ff','#d500f9','#ff1744'];
+  ctx.save();
+  for(let i=0;i<220;i++){
+    const cx=Math.random()*W, cy=Math.random()*H;
+    const cs=Math.random()*9+3;
+    ctx.globalAlpha=Math.random()*.65+.15;
+    ctx.fillStyle=confettiColors[Math.floor(Math.random()*confettiColors.length)];
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(Math.random()*Math.PI*2);
+    Math.random()>.5?ctx.fillRect(-cs/2,-cs/4,cs,cs/2):(ctx.beginPath(),ctx.arc(0,0,cs/2.2,0,Math.PI*2),ctx.fill());
+    ctx.restore();
+  }
+  ctx.globalAlpha=1;ctx.restore();
+
+  // ── Wavy banner header
+  ctx.fillStyle='#ff3fa4';
+  ctx.beginPath();ctx.moveTo(0,0);
+  for(let x=0;x<=W;x+=32){ctx.lineTo(x,x%64===0?0:16);}
+  ctx.lineTo(W,68);ctx.lineTo(0,68);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#fff200';
+  ctx.beginPath();ctx.moveTo(0,5);
+  for(let x=0;x<=W;x+=32){ctx.lineTo(x,x%64===0?5:20);}
+  ctx.lineTo(W,72);ctx.lineTo(0,72);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#00c853';ctx.fillRect(0,72,W,7);
+  ctx.fillStyle='#00b0ff';ctx.fillRect(0,79,W,4);
+
+  // Header text
+  ctx.font='900 32px "Playfair Display",serif';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.strokeStyle='rgba(180,0,80,.4)';ctx.lineWidth=5;ctx.strokeText('POLAROID PARTY!',W/2,12);
+  ctx.fillStyle='#fff';ctx.fillText('POLAROID PARTY!',W/2,12);
+  ctx.font='bold 9px "Courier Prime",monospace';ctx.fillStyle='rgba(255,255,255,.92)';
+  ctx.fillText('✦  SNAPCAN  ·  PARTY EDITION  ·  6 SHOTS  ✦',W/2,52);
+
+  // ── 6 POLAROIDS — 3 rows of 2, alternating tilts
+  const pcColors=['#ff3fa4','#ff9500','#00c853','#00b0ff','#d500f9','#ff1744'];
+  const pcLabels=['#besties','#squad','#memories','#vibes','#captured','#forever'];
+  const tilts=[-6,4,-3,7,-5,3];
+  const pW=258,pH=230,pPAD=36;
+
+  // 3 rows × 2 cols — positions calculated with overlap for messiness
+  const rowOffsets=[0,-8,6]; // vertical stagger per row
+  for(let i=0;i<6;i++){
+    const col=i%2, row=Math.floor(i/2);
+    const baseX=col===0?pPAD:W-pPAD-pW;
+    const baseY=88+row*(pH+65)+rowOffsets[row];
+    // Slight random nudge for scattered feel
+    const nudgeX=(i%3-1)*12;
+    const nudgeY=(i%2===0?-6:8);
+    const px=baseX+nudgeX, py=baseY+nudgeY;
+    const cx2=px+pW/2, cy2=py+(pH+44)/2;
+    const ang=tilts[i]*Math.PI/180;
+
+    ctx.save();ctx.translate(cx2,cy2);ctx.rotate(ang);
+
+    // Drop shadow
+    ctx.fillStyle='rgba(0,0,0,.2)';ctx.fillRect(-pW/2+7,-(pH+44)/2+7,pW,pH+44);
+
+    // White polaroid body
+    ctx.fillStyle='#ffffff';ctx.fillRect(-pW/2,-(pH+44)/2,pW,pH+44);
+
+    // Tape
+    ctx.fillStyle='rgba(255,240,80,.65)';ctx.fillRect(-22,-(pH+44)/2-7,44,15);
+    ctx.strokeStyle='rgba(180,140,0,.25)';ctx.lineWidth=.5;ctx.strokeRect(-22,-(pH+44)/2-7,44,15);
+
+    // Color accent bar
+    ctx.fillStyle=pcColors[i];ctx.fillRect(-pW/2,-(pH+44)/2,pW,8);
+
+    // Photo
+    if(I[i])drawPhoto(ctx,I[i],-pW/2+6,-(pH+44)/2+8,pW-12,pH-4,0);
+    else{ctx.fillStyle='#ececec';ctx.fillRect(-pW/2+6,-(pH+44)/2+8,pW-12,pH-4);}
+
+    // Bottom label
+    ctx.font='bold 11px "Courier Prime",monospace';
+    ctx.fillStyle=pcColors[i];ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(pcLabels[i],0,(pH+44)/2-22);
+
+    // Thin outer border
+    ctx.strokeStyle='rgba(0,0,0,.07)';ctx.lineWidth=1.5;ctx.strokeRect(-pW/2,-(pH+44)/2,pW,pH+44);
+
+    ctx.restore();
+
+    // Pin at top center of polaroid (drawn after restore to stay on top)
+    ctx.save();
+    const pinX=cx2+Math.sin(ang)*(-(pH+44)/2);
+    const pinY=cy2-Math.cos(ang)*((pH+44)/2);
+    ctx.translate(pinX,pinY);
+    ctx.fillStyle=pcColors[i];ctx.beginPath();ctx.arc(0,0,9,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(0,0,4.5,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.15)';ctx.lineWidth=1;ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── Fun emoji/symbol decorations floating around
+  const deco=[
+    ['✦','#fff200',38,260,22],['★','#00c853',610,180,20],
+    ['♥','#ff3fa4',320,480,26],['✦','#00b0ff',28,680,18],
+    ['✿','#d500f9',628,620,22],['★','#ff9500',320,910,20],
+    ['♥','#ff1744',608,840,18],['✦','#00c853',40,1010,16],
+  ];
+  deco.forEach(([t,c,fx,fy,fs])=>{
+    ctx.font=`${fs}px serif`;ctx.fillStyle=c;ctx.globalAlpha=.55;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,fx,fy);
+  });
+  ctx.globalAlpha=1;
+
+  // ── Bottom thumbnail film strip (6 thumbnails)
+  const stripY=H-58;
+  ctx.fillStyle='#ff3fa4';ctx.fillRect(0,stripY,W,58);
+  ctx.fillStyle='rgba(255,255,255,.1)';
+  for(let x=0;x<W;x+=9){ctx.fillRect(x,stripY,5,58);}
+  const tnW=Math.floor((W-16)/6)-4;
+  for(let i=0;i<6;i++){
+    const tnx=8+i*(tnW+4),tny=stripY+5;
+    const tnh=48;
+    ctx.fillStyle='#1a0020';ctx.fillRect(tnx,tny,tnW,tnh);
+    if(I[i])drawPhoto(ctx,I[i],tnx+2,tny+2,tnW-4,tnh-4,0);
+    ctx.strokeStyle=pcColors[i];ctx.lineWidth=1.5;ctx.strokeRect(tnx,tny,tnW,tnh);
+  }
 }},
 
 ];
@@ -3597,11 +4541,14 @@ function playShutter(){
 }
 
 
+
 function snap(){
   const vid=document.getElementById('video'),wc=document.getElementById('wc');
   wc.width=vid.videoWidth||640;wc.height=vid.videoHeight||480;
   const ctx=wc.getContext('2d');
-  ctx.translate(wc.width,0);ctx.scale(-1,1);ctx.drawImage(vid,0,0);ctx.setTransform(1,0,0,1,0,0);
+  // Mirror video
+  ctx.drawImage(vid,0,0);
+
   document.getElementById('flash').classList.add('go');
   playShutter(); // 📸 camera shutter sound
   setTimeout(()=>document.getElementById('flash').classList.remove('go'),120);
