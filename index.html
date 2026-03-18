@@ -573,7 +573,7 @@ body{
     <div class="panel">
       <div class="panel-hd">
         <span>📰 Pilih Layout</span>
-        <span class="panel-hd-badge">35 Pilihan</span>
+        <span class="panel-hd-badge">49 Pilihan</span>
       </div>
       <div class="layout-scroll" id="layout-grid"></div>
     </div>
@@ -4241,6 +4241,1759 @@ async render(ctx,I){
     if(I[i])drawPhoto(ctx,I[i],tnx+2,tny+2,tnW-4,tnh-4,0);
     ctx.strokeStyle=pcColors[i];ctx.lineWidth=1.5;ctx.strokeRect(tnx,tny,tnW,tnh);
   }
+}},
+
+// ── 35: SUNSET ROLL — film strip full-bleed warm 4 foto ───────
+{name:'SUNSET ROLL',W:520,H:1380,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // ── Full bleed warm sunset bg
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#1a0533');bg.addColorStop(.25,'#8b1a4a');
+  bg.addColorStop(.5,'#e8521a');bg.addColorStop(.75,'#f5a623');bg.addColorStop(1,'#ffd700');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  // Sun glow
+  const sun=ctx.createRadialGradient(W/2,H*.62,0,W/2,H*.62,W*.7);
+  sun.addColorStop(0,'rgba(255,220,80,.35)');sun.addColorStop(.5,'rgba(255,140,0,.12)');
+  sun.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=sun;ctx.fillRect(0,0,W,H);
+
+  // ── Film sprocket holes left & right
+  const holeW=14,holeH=22,holeGap=32;
+  ctx.fillStyle='rgba(0,0,0,.55)';
+  ctx.fillRect(0,0,22,H);ctx.fillRect(W-22,0,22,H);
+  for(let y=20;y<H-20;y+=holeGap){
+    ctx.fillStyle='rgba(255,220,80,.9)';
+    ctx.beginPath();ctx.roundRect(4,y,14,18,4);ctx.fill();
+    ctx.beginPath();ctx.roundRect(W-18,y,14,18,4);ctx.fill();
+  }
+
+  // ── HEADER — minimal, film leader style
+  ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(22,0,W-44,52);
+  ctx.font='900 18px "Playfair Display",serif';
+  const tg=ctx.createLinearGradient(22,0,W-22,0);
+  tg.addColorStop(0,'#ffd700');tg.addColorStop(.5,'#fff');tg.addColorStop(1,'#ffd700');
+  ctx.fillStyle=tg;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('SUNSET ROLL',W/2,18);
+  ctx.font='bold 7px "Courier Prime",monospace';ctx.fillStyle='rgba(255,220,80,.7)';
+  ctx.fillText('SNAPCAN  ·  GOLDEN HOUR  ·  4 EXPOSURES',W/2,36);
+  ctx.font='7px "Courier Prime",monospace';ctx.fillStyle='rgba(255,200,100,.45)';
+  ctx.fillText(new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}).toUpperCase(),W/2,48);
+
+  // ── 4 PHOTOS — full width, max size, hair-thin gaps
+  const PAD=24; // inside sprocket holes
+  const GAP=4;
+  const totalH=H-52-10; // available below header
+  const ph=Math.floor((totalH-GAP*3)/4);
+  const pw=W-PAD*2;
+
+  for(let i=0;i<4;i++){
+    const py=52+4+i*(ph+GAP);
+
+    // Photo - full bleed inside
+    drawPhoto(ctx,I[i],PAD,py,pw,ph,0);
+
+    // Warm color grade
+    ctx.save();ctx.globalCompositeOperation='multiply';ctx.globalAlpha=.18;
+    const cg=ctx.createLinearGradient(PAD,py,PAD,py+ph);
+    cg.addColorStop(0,'#ff6600');cg.addColorStop(1,'#8b1a4a');
+    ctx.fillStyle=cg;ctx.fillRect(PAD,py,pw,ph);
+    ctx.globalCompositeOperation='source-over';ctx.restore();
+
+    // Bottom gradient bar on photo (thin info strip)
+    const barH=22;
+    const barG=ctx.createLinearGradient(PAD,py+ph-barH,PAD,py+ph);
+    barG.addColorStop(0,'rgba(0,0,0,0)');barG.addColorStop(1,'rgba(0,0,0,.72)');
+    ctx.fillStyle=barG;ctx.fillRect(PAD,py+ph-barH,pw,barH);
+
+    // Frame counter
+    ctx.font='bold 8px "Courier Prime",monospace';
+    ctx.fillStyle='rgba(255,220,80,.85)';ctx.textAlign='left';ctx.textBaseline='bottom';
+    ctx.fillText(String(i+1).padStart(2,'0')+'A',PAD+5,py+ph-3);
+    ctx.textAlign='right';ctx.fillStyle='rgba(255,255,255,.45)';
+    ctx.fillText(['OPEN','GOLDEN','DUSK','CLOSE'][i],PAD+pw-5,py+ph-3);
+
+    // Top-left notch corner detail
+    ctx.fillStyle='rgba(255,200,80,.3)';
+    ctx.beginPath();ctx.moveTo(PAD,py);ctx.lineTo(PAD+10,py);ctx.lineTo(PAD,py+10);ctx.closePath();ctx.fill();
+    ctx.beginPath();ctx.moveTo(PAD+pw,py);ctx.lineTo(PAD+pw-10,py);ctx.lineTo(PAD+pw,py+10);ctx.closePath();ctx.fill();
+  }
+
+  // ── Bottom label
+  ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(22,H-10,W-44,10);
+  ctx.font='6px "Courier Prime",monospace';ctx.fillStyle='rgba(255,200,80,.5)';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('SNAPCAN PHOTOBOOTH  ·  SUNSET ROLL  ·  ISO 400',W/2,H-5);
+}},
+
+// ── 36: GLITCH ART — cyberpunk RGB split 4 foto ───────────────
+{name:'GLITCH ART',W:580,H:1260,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // ── Scanline dark bg
+  ctx.fillStyle='#050510';ctx.fillRect(0,0,W,H);
+  ctx.save();
+  for(let y=0;y<H;y+=4){
+    ctx.globalAlpha=y%8===0?.06:.02;
+    ctx.fillStyle='#00ffff';ctx.fillRect(0,y,W,2);
+  }
+  ctx.globalAlpha=1;ctx.restore();
+
+  // Glitch noise bars
+  ctx.save();
+  for(let i=0;i<12;i++){
+    const gy=Math.random()*H, gh=Math.random()*6+1;
+    const shift=Math.random()*30-15;
+    ctx.globalAlpha=Math.random()*.25;
+    ctx.fillStyle=Math.random()>.5?'#ff0055':'#00ffff';
+    ctx.fillRect(shift,gy,W,gh);
+  }
+  ctx.globalAlpha=1;ctx.restore();
+
+  // ── HEADER — CRT terminal style
+  ctx.fillStyle='#000';ctx.fillRect(0,0,W,60);
+  ctx.strokeStyle='#00ffff';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(0,60);ctx.lineTo(W,60);ctx.stroke();
+  ctx.strokeStyle='#ff0055';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,58);ctx.lineTo(W,58);ctx.stroke();
+
+  // Glitchy title — RGB offset
+  const title='GLITCH ART';
+  ctx.font='900 28px "Playfair Display",serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.globalAlpha=.7;
+  ctx.fillStyle='#ff0055';ctx.fillText(title,W/2+4,28+2);
+  ctx.fillStyle='#00ffff';ctx.fillText(title,W/2-4,28-2);
+  ctx.globalAlpha=1;ctx.fillStyle='#fff';ctx.fillText(title,W/2,28);
+
+  ctx.font='bold 7px "Courier Prime",monospace';ctx.fillStyle='#00ffff';ctx.fillText('> SNAPCAN_PHOTOBOOTH.EXE  [4 FRAMES]',W/2,50);
+
+  // ── 4 PHOTOS — max width, glitch treatment
+  const PAD=6,GAP=6;
+  const ph=Math.floor((H-60-GAP*3)/4);
+  const pw=W-PAD*2;
+
+  for(let i=0;i<4;i++){
+    const py=60+i*(ph+GAP);
+
+    // Photo base
+    drawPhoto(ctx,I[i],PAD,py,pw,ph,0);
+
+    // RGB split glitch on photo
+    ctx.save();
+    ctx.globalCompositeOperation='screen';
+    ctx.globalAlpha=.12;
+    ctx.fillStyle='#ff0055';ctx.fillRect(PAD-3,py,pw,ph);
+    ctx.fillStyle='#00ffff';ctx.fillRect(PAD+3,py,pw,ph);
+    ctx.globalCompositeOperation='source-over';ctx.restore();
+
+    // Horizontal glitch slices (random)
+    ctx.save();ctx.globalAlpha=.18;
+    for(let g=0;g<4;g++){
+      const gy2=py+Math.random()*ph;
+      const gsh=(Math.random()*16-8);
+      ctx.fillStyle=Math.random()>.5?'#ff0055':'#00ffff';
+      ctx.fillRect(PAD+gsh,gy2,pw,Math.random()*3+.5);
+    }
+    ctx.globalAlpha=1;ctx.restore();
+
+    // Thick neon border — double line
+    ctx.strokeStyle='#00ffff';ctx.lineWidth=2;ctx.strokeRect(PAD,py,pw,ph);
+    ctx.strokeStyle='#ff0055';ctx.lineWidth=1;ctx.strokeRect(PAD+2,py+2,pw-4,ph-4);
+
+    // Corner brackets
+    const bk=14,bkt=2;
+    [
+      [PAD,py],[PAD+pw,py],[PAD,py+ph],[PAD+pw,py+ph]
+    ].forEach(([cx,cy],ci)=>{
+      const dx=ci%2===0?1:-1, dy=ci<2?1:-1;
+      ctx.strokeStyle='#fff200';ctx.lineWidth=bkt;
+      ctx.beginPath();ctx.moveTo(cx,cy+dy*bk);ctx.lineTo(cx,cy);ctx.lineTo(cx+dx*bk,cy);ctx.stroke();
+    });
+
+    // Frame data overlay
+    ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(PAD,py,pw,18);
+    ctx.font='bold 7px "Courier Prime",monospace';ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.fillStyle='#00ffff';ctx.fillText(`> FRAME_${String(i+1).padStart(3,'0')}.RAW`,PAD+6,py+9);
+    ctx.fillStyle='#ff0055';ctx.textAlign='right';
+    ctx.fillText(['ERROR_CORRECTED','RGB_SPLIT','MEMORY_LEAK','BUFFER_OVERFLOW'][i],PAD+pw-6,py+9);
+  }
+}},
+
+// ── 37: HAWAII — tropical bold summer 4 foto ─────────────────
+{name:'HAWAII',W:600,H:1260,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // ── Sky-to-sea gradient
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#ff6b35');bg.addColorStop(.2,'#ff9f1c');
+  bg.addColorStop(.45,'#ffcc44');bg.addColorStop(.65,'#06d6a0');bg.addColorStop(1,'#0096c7');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  // ── Tropical leaf silhouettes (sides)
+  function leaf(x,y,size,flip,color){
+    ctx.save();ctx.translate(x,y);if(flip)ctx.scale(-1,1);ctx.fillStyle=color;
+    ctx.beginPath();
+    ctx.moveTo(0,0);ctx.bezierCurveTo(size*.3,-size*.6,size*.9,-size*.5,size*.8,-size*.1);
+    ctx.bezierCurveTo(size*.9,.1,size*.4,.3,0,0);ctx.closePath();ctx.fill();
+    // midrib
+    ctx.strokeStyle='rgba(0,0,0,.15)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(size*.7,-size*.3);ctx.stroke();
+    ctx.restore();
+  }
+  // Left leaves
+  leaf(0,80,110,false,'rgba(0,120,60,.75)');
+  leaf(-10,160,90,false,'rgba(0,160,70,.6)');
+  leaf(5,300,75,false,'rgba(20,140,50,.65)');
+  leaf(-5,H*.55,100,false,'rgba(0,100,50,.7)');
+  leaf(0,H*.75,80,false,'rgba(30,160,60,.55)');
+  // Right leaves
+  leaf(W,120,110,true,'rgba(0,120,60,.75)');
+  leaf(W+5,220,95,true,'rgba(0,160,70,.6)');
+  leaf(W-2,380,80,true,'rgba(20,140,50,.65)');
+  leaf(W,H*.6,90,true,'rgba(0,100,50,.65)');
+  leaf(W+3,H*.8,75,true,'rgba(30,160,60,.55)');
+
+  // ── Hibiscus flowers (corners)
+  function hibiscus(x,y,r,c1,c2){
+    ctx.save();ctx.translate(x,y);
+    for(let p=0;p<5;p++){
+      ctx.save();ctx.rotate(p*Math.PI*2/5);ctx.fillStyle=c1;
+      ctx.beginPath();ctx.ellipse(0,-r*.7,r*.3,r*.55,0,0,Math.PI*2);ctx.fill();ctx.restore();
+    }
+    ctx.fillStyle=c2;ctx.beginPath();ctx.arc(0,0,r*.22,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }
+  hibiscus(28,50,22,'rgba(255,50,100,.9)','#fff200');
+  hibiscus(W-28,50,20,'rgba(255,100,20,.9)','#fff');
+  hibiscus(24,H-44,18,'rgba(255,50,100,.8)','#fff200');
+  hibiscus(W-24,H-44,20,'rgba(255,150,0,.85)','#fff');
+
+  // ── HEADER
+  ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(0,0,W,58);
+  // Wavy top
+  ctx.fillStyle='rgba(255,200,50,.15)';
+  ctx.beginPath();ctx.moveTo(0,58);
+  for(let x=0;x<=W;x+=20){ctx.lineTo(x,58+Math.sin(x*.2)*5);}
+  ctx.lineTo(W,0);ctx.lineTo(0,0);ctx.closePath();ctx.fill();
+
+  ctx.font='900 26px "Playfair Display",serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  // Shadow text
+  ctx.fillStyle='rgba(255,100,0,.4)';ctx.fillText('🌺 HAWAII 🌺',W/2+2,24+2);
+  ctx.fillStyle='#fff';ctx.fillText('🌺 HAWAII 🌺',W/2,24);
+  ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='rgba(255,240,100,.85)';
+  ctx.fillText('ALOHA  ·  SNAPCAN  ·  TROPICAL EDITION',W/2,46);
+
+  // ── 4 PHOTOS — full width, max height, thin gap
+  const PAD=38; // inside leaf margins
+  const GAP=5;
+  const ph=Math.floor((H-58-8-GAP*3)/4);
+  const pw=W-PAD*2;
+
+  const frameColors=['#ff6b35','#06d6a0','#ff9f1c','#0096c7'];
+
+  for(let i=0;i<4;i++){
+    const py=58+4+i*(ph+GAP);
+
+    // Drop shadow
+    ctx.fillStyle='rgba(0,0,0,.2)';ctx.fillRect(PAD+3,py+3,pw,ph);
+
+    // Photo
+    drawPhoto(ctx,I[i],PAD,py,pw,ph,0);
+
+    // Tropical warm grade on photo
+    ctx.save();ctx.globalCompositeOperation='multiply';ctx.globalAlpha=.12;
+    ctx.fillStyle=frameColors[i];ctx.fillRect(PAD,py,pw,ph);
+    ctx.globalCompositeOperation='source-over';ctx.restore();
+
+    // Frame border — thick colorful
+    ctx.strokeStyle=frameColors[i];ctx.lineWidth=4;ctx.strokeRect(PAD,py,pw,ph);
+    // Inner thin white
+    ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=1;ctx.strokeRect(PAD+4,py+4,pw-8,ph-8);
+
+    // Bottom gradient + text
+    const footerG=ctx.createLinearGradient(PAD,py+ph-28,PAD,py+ph);
+    footerG.addColorStop(0,'rgba(0,0,0,0)');footerG.addColorStop(1,'rgba(0,0,0,.7)');
+    ctx.fillStyle=footerG;ctx.fillRect(PAD,py+ph-28,pw,28);
+    ctx.font='bold 9px "Courier Prime",monospace';ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='bottom';
+    ctx.fillText(['SUNRISE SHOT','MID-DAY VIBES','GOLDEN DUSK','NIGHT PALMS'][i],PAD+8,py+ph-4);
+    ctx.textAlign='right';ctx.fillStyle=frameColors[i];
+    ctx.fillText('✦',PAD+pw-8,py+ph-4);
+  }
+
+  // ── Bottom footer bar
+  ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(0,H-18,W,18);
+  ctx.font='7px "Courier Prime",monospace';ctx.fillStyle='rgba(255,230,100,.6)';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('ALOHA FROM SNAPCAN  ·  HAWAII EDITION  ·  '+new Date().getFullYear(),W/2,H-9);
+}},
+
+// ── 38: BUBBLE GUM — Y2K bubbly max-fun 4 foto ───────────────
+{name:'BUBBLE GUM',W:580,H:1260,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // ── Bubblegum pink-blue gradient bg
+  const bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#ff70a6');bg.addColorStop(.35,'#ff9de2');
+  bg.addColorStop(.65,'#a0d2ff');bg.addColorStop(1,'#70b8ff');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  // ── Big bubble circles (background)
+  const bubbles=[
+    [W*.08,H*.06,52,'rgba(255,255,255,.18)'],[W*.92,H*.1,44,'rgba(255,255,255,.15)'],
+    [W*.05,H*.35,38,'rgba(255,255,255,.12)'],[W*.95,H*.4,46,'rgba(255,255,255,.14)'],
+    [W*.1,H*.68,42,'rgba(255,255,255,.13)'],[W*.9,H*.72,36,'rgba(255,255,255,.16)'],
+    [W*.06,H*.9,50,'rgba(255,255,255,.12)'],[W*.94,H*.88,40,'rgba(255,255,255,.15)'],
+    [W*.5,H*.02,60,'rgba(255,255,255,.1)'],[W*.5,H*.98,55,'rgba(255,255,255,.1)'],
+  ];
+  bubbles.forEach(([bx,by,br,bc])=>{
+    ctx.save();
+    // Bubble fill
+    const bg2=ctx.createRadialGradient(bx-br*.3,by-br*.3,0,bx,by,br);
+    bg2.addColorStop(0,'rgba(255,255,255,.35)');bg2.addColorStop(.6,bc);bg2.addColorStop(1,'rgba(255,255,255,.05)');
+    ctx.fillStyle=bg2;ctx.beginPath();ctx.arc(bx,by,br,0,Math.PI*2);ctx.fill();
+    // Bubble shine
+    ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.ellipse(bx-br*.3,by-br*.3,br*.2,br*.12,-0.5,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  });
+
+  // ── Squiggly decorations
+  function squiggle(x,y,len,amplitude,color,lw){
+    ctx.save();ctx.strokeStyle=color;ctx.lineWidth=lw;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(x,y);
+    for(let t=0;t<=1;t+=.05){
+      const sx=x+t*len;
+      const sy=y+Math.sin(t*Math.PI*4)*amplitude;
+      ctx.lineTo(sx,sy);
+    }
+    ctx.stroke();ctx.restore();
+  }
+  squiggle(10,H*.22,W*.18,10,'rgba(255,255,255,.5)',2.5);
+  squiggle(W*.78,H*.18,W*.18,10,'rgba(255,255,255,.45)',2.5);
+  squiggle(10,H*.55,W*.15,8,'rgba(255,255,255,.4)',2);
+  squiggle(W*.82,H*.6,W*.15,8,'rgba(255,255,255,.4)',2);
+  squiggle(10,H*.82,W*.2,10,'rgba(255,255,255,.45)',2.5);
+
+  // ── Stars / sparkles
+  [[W*.15,H*.08,'#fff200',12],[W*.85,H*.06,'#fff',10],[W*.08,H*.45,'#fff',8],
+   [W*.92,H*.5,'#fff200',9],[W*.12,H*.78,'#fff',10],[W*.88,H*.82,'#fff200',11]].forEach(([sx,sy,sc,ss])=>{
+    ctx.font=`${ss}px serif`;ctx.fillStyle=sc;ctx.globalAlpha=.8;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('✦',sx,sy);
+  });
+  ctx.globalAlpha=1;
+
+  // ── HEADER
+  ctx.fillStyle='rgba(255,255,255,.88)';ctx.fillRect(0,0,W,56);
+  // Dotted bottom border
+  ctx.strokeStyle='#ff70a6';ctx.lineWidth=3;ctx.setLineDash([6,5]);
+  ctx.beginPath();ctx.moveTo(0,56);ctx.lineTo(W,56);ctx.stroke();ctx.setLineDash([]);
+
+  ctx.font='900 26px "Playfair Display",serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillStyle='rgba(255,100,160,.2)';ctx.fillText('BUBBLE GUM',W/2+2,24+2);
+  ctx.fillStyle='#ff3399';ctx.fillText('BUBBLE GUM',W/2,24);
+  ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='#7b5ea7';
+  ctx.fillText('✦  SNAPCAN  ·  Y2K EDITION  ✦',W/2,46);
+
+  // ── 4 PHOTOS — full width max height
+  const PAD=10,GAP=6;
+  const ph=Math.floor((H-56-8-GAP*3)/4);
+  const pw=W-PAD*2;
+
+  const frameGrads=[
+    ['#ff70a6','#ffb3d9'],['#a0d2ff','#70b8ff'],
+    ['#ffcc70','#ff9de2'],['#70ffcc','#a0d2ff'],
+  ];
+
+  for(let i=0;i<4;i++){
+    const py=56+4+i*(ph+GAP);
+
+    // Soft shadow
+    ctx.fillStyle='rgba(180,100,160,.15)';ctx.fillRect(PAD+5,py+5,pw,ph);
+
+    // White mat
+    ctx.fillStyle='rgba(255,255,255,.92)';ctx.fillRect(PAD-4,py-4,pw+8,ph+8);
+
+    // Photo
+    drawPhoto(ctx,I[i],PAD,py,pw,ph,0);
+
+    // Dreamy pastel overlay
+    ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=.07;
+    ctx.fillStyle=frameGrads[i][0];ctx.fillRect(PAD,py,pw,ph);
+    ctx.globalCompositeOperation='source-over';ctx.restore();
+
+    // Gradient border — bubbly pill corners
+    const gr=ctx.createLinearGradient(PAD,py,PAD+pw,py+ph);
+    gr.addColorStop(0,frameGrads[i][0]);gr.addColorStop(1,frameGrads[i][1]);
+    ctx.strokeStyle=gr;ctx.lineWidth=4.5;ctx.strokeRect(PAD,py,pw,ph);
+
+    // Little bubble badge top-right
+    const bdg=['01','02','03','04'][i];
+    ctx.fillStyle=frameGrads[i][0];ctx.beginPath();ctx.arc(PAD+pw-2,py+1,14,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+    ctx.font='bold 9px "Courier Prime",monospace';ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(bdg,PAD+pw-2,py+1);
+
+    // Bottom label
+    ctx.fillStyle='rgba(255,255,255,.75)';ctx.fillRect(PAD,py+ph-20,pw,20);
+    ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle=frameGrads[i][0]==='#ff70a6'?'#cc0055':'#0066cc';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(['SO CUTE!','AMAZING~','LOVE THIS!','PERFECT!'][i],W/2,py+ph-10);
+  }
+
+  // ── Footer bubble
+  ctx.fillStyle='rgba(255,255,255,.8)';ctx.fillRect(0,H-18,W,18);
+  ctx.font='7px "Courier Prime",monospace';ctx.fillStyle='#cc44aa';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('♡  SNAPCAN BUBBLE GUM EDITION  ·  SO KAWAII!  ♡',W/2,H-9);
+}},
+
+// ── 39: WINDOWS 98 — pixel art retro OS dialog 4 foto ────────
+{name:'WINDOWS 98',W:520,H:1320,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // ── Sky blue desktop background (Windows 98 teal)
+  ctx.fillStyle='#008080';ctx.fillRect(0,0,W,H);
+
+  // Pixel grass at bottom
+  ctx.fillStyle='#228B22';ctx.fillRect(0,H-40,W,40);
+  // Pixel diamond leaves on sides
+  function pixelLeaf(x,y,c){
+    const s=10;
+    [[0,-2],[-1,-1],[0,-1],[1,-1],[-1,0],[0,0],[1,0],[0,1]].forEach(([dx,dy])=>{
+      ctx.fillStyle=c;ctx.fillRect(x+dx*s,y+dy*s,s,s);
+    });
+  }
+  // Green pixel diamonds right side
+  ['#22cc22','#00ff00','#11aa11'].forEach((c,i)=>{
+    pixelLeaf(W-20,60+i*80,c);pixelLeaf(W-35,100+i*80,c);
+  });
+  pixelLeaf(W-20,H*.5,'#22cc22');pixelLeaf(W-40,H*.55,'#00ff00');
+
+  // ── Helper: draw Windows 98 dialog window
+  function win98Dialog(x,y,w,h,img,label,extras){
+    // Window shadow
+    ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(x+4,y+4,w,h);
+    // Window body — light grey
+    ctx.fillStyle='#c0c0c0';ctx.fillRect(x,y,w,h);
+    // 3D border effect (raised)
+    ctx.fillStyle='#ffffff';ctx.fillRect(x,y,w,2);ctx.fillRect(x,y,2,h); // light top/left
+    ctx.fillStyle='#808080';ctx.fillRect(x,y+h-2,w,2);ctx.fillRect(x+w-2,y,2,h); // dark bottom/right
+    ctx.fillStyle='#dfdfdf';ctx.fillRect(x+2,y+2,w-4,h-4);// inner face
+
+    // Title bar — Windows 98 gradient blue
+    const tb=ctx.createLinearGradient(x,y+2,x+w,y+2);
+    tb.addColorStop(0,'#000080');tb.addColorStop(1,'#1084d0');
+    ctx.fillStyle=tb;ctx.fillRect(x+2,y+2,w-4,20);
+
+    // Title text
+    ctx.font='bold 9px "Courier Prime",monospace';ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.fillText('System message',x+18,y+12);
+
+    // X close button
+    ctx.fillStyle='#c0c0c0';ctx.fillRect(x+w-18,y+4,14,14);
+    ctx.fillStyle='#fff';ctx.fillRect(x+w-18,y+4,14,2);ctx.fillRect(x+w-18,y+4,2,14);
+    ctx.fillStyle='#808080';ctx.fillRect(x+w-18,y+16,14,2);ctx.fillRect(x+w-4,y+4,2,14);
+    ctx.font='bold 9px "Courier Prime",monospace';ctx.fillStyle='#000';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('×',x+w-11,y+11);
+
+    // Photo inside window
+    const px2=x+4,py2=y+24,pw2=w-8,ph2=h-28;
+    if(img)drawPhoto(ctx,img,px2,py2,pw2,ph2,0);
+    else{ctx.fillStyle='#808080';ctx.fillRect(px2,py2,pw2,ph2);}
+
+    // Sunken border around photo
+    ctx.fillStyle='#808080';ctx.fillRect(px2-2,py2-2,pw2+4,2);ctx.fillRect(px2-2,py2-2,2,ph2+4);
+    ctx.fillStyle='#fff';ctx.fillRect(px2-2,py2+ph2,pw2+4,2);ctx.fillRect(px2+pw2,py2-2,2,ph2+4);
+  }
+
+  // ── Pixel heart decorations (above window 4)
+  function pixelHeart(x,y,c){
+    const s=7;
+    [[1,0],[2,0],[4,0],[5,0],[0,1],[1,1],[2,1],[3,1],[4,1],[5,1],[6,1],
+     [0,2],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],[1,3],[2,3],[3,3],[4,3],[5,3],[2,4],[3,4],[4,4],[3,5]].forEach(([dx,dy])=>{
+      ctx.fillStyle=c;ctx.fillRect(x+dx*s,y+dy*s,s,s);
+    });
+  }
+  pixelHeart(W*.38,H*.58,'#ff0000');
+  pixelHeart(W*.52,H*.58,'#ff0000');
+  pixelHeart(W*.66,H*.58,'#ff0000');
+
+  // ── Speech bubble "bro" between windows 1 and 2
+  function speechBubble(x,y,text,tailLeft){
+    ctx.fillStyle='#fff';ctx.strokeStyle='#333';ctx.lineWidth=2;
+    ctx.beginPath();ctx.roundRect(x,y,60,24,8);ctx.fill();ctx.stroke();
+    // Tail
+    ctx.beginPath();
+    if(tailLeft){ctx.moveTo(x+10,y+18);ctx.lineTo(x-8,y+30);ctx.lineTo(x+22,y+24);}
+    else{ctx.moveTo(x+50,y+18);ctx.lineTo(x+68,y+30);ctx.lineTo(x+38,y+24);}
+    ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#333';ctx.stroke();
+    ctx.font='bold 11px "Courier Prime",monospace';ctx.fillStyle='#000';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(text,x+30,y+12);
+  }
+
+  // ── Pixel character (simplified sprite)
+  function pixelChar(x,y,colors){
+    const s=5,c=colors;
+    // Simple pixel humanoid
+    [[2,0,c[0]],[1,1,c[0]],[2,1,c[0]],[3,1,c[0]], // head
+     [1,2,c[1]],[2,2,c[1]],[3,2,c[1]], // body top
+     [0,3,c[2]],[1,3,c[1]],[2,3,c[1]],[3,3,c[1]],[4,3,c[2]], // arms
+     [1,4,c[1]],[2,4,c[1]],[3,4,c[1]], // body bottom
+     [1,5,c[2]],[2,5,c[2]],[3,5,c[3]],[4,5,c[3]], // legs
+    ].forEach(([dx,dy,col])=>{ctx.fillStyle=col;ctx.fillRect(x+dx*s,y+dy*s,s,s);});
+  }
+
+  // 4 dialog windows — full width, stacked
+  const WX=16,WW=W-WX*2;
+  const wGap=8;
+  const wH=Math.floor((H-40-wGap*3-80)/4); // -80 for header + footer
+
+  // Top header — desktop bar
+  ctx.fillStyle='rgba(0,0,0,.4)';ctx.fillRect(0,0,W,32);
+  ctx.font='bold 10px "Courier Prime",monospace';ctx.fillStyle='#00ff00';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('C:\\SNAPCAN\\PHOTOBOOTH.EXE',10,16);
+  ctx.textAlign='right';ctx.fillStyle='#fff';
+  ctx.fillText(new Date().toLocaleDateString('en-US',{month:'numeric',day:'numeric',year:'2-digit'})+' '+new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),W-10,16);
+
+  // Pixel character top-left
+  pixelChar(WX-8,36+wH*.3,['#ffdead','#9b59b6','#e74c3c','#333']);
+
+  // Window 1
+  win98Dialog(WX,36,WW,wH,I[0],'System message');
+  // Speech bubbles between 1 and 2
+  const gap1Y=36+wH+wGap/2;
+  speechBubble(WX+16,gap1Y-18,'bro',true);
+  speechBubble(WX+8,gap1Y+6,'?!?!',true);
+
+  // Window 2
+  win98Dialog(WX,36+wH+wGap,WW,wH,I[1],'System message');
+
+  // Pixel hearts between 2 and 3
+  const gap2Y=36+wH*2+wGap*2;
+  pixelHeart(WX+WW*.28,gap2Y-2,'#ff0000');
+  pixelHeart(WX+WW*.46,gap2Y-2,'#ff0000');
+  pixelHeart(WX+WW*.64,gap2Y-2,'#ff0000');
+
+  // Window 3
+  win98Dialog(WX,36+(wH+wGap)*2,WW,wH,I[2],'System message');
+
+  // Window 4
+  win98Dialog(WX,36+(wH+wGap)*3,WW,wH,I[3],'System message');
+  // Pixel character bottom-right
+  pixelChar(WX+WW-18,36+(wH+wGap)*3+wH*.4,['#ffdead','#e74c3c','#3498db','#333']);
+
+  // ── START BUTTON at bottom
+  const btnY=H-36,btnW=120,btnH=24,btnX=(W-btnW)/2;
+  ctx.fillStyle='#c0c0c0';ctx.fillRect(btnX,btnY,btnW,btnH);
+  ctx.fillStyle='#fff';ctx.fillRect(btnX,btnY,btnW,2);ctx.fillRect(btnX,btnY,2,btnH);
+  ctx.fillStyle='#808080';ctx.fillRect(btnX,btnY+btnH-2,btnW,2);ctx.fillRect(btnX+btnW-2,btnY,2,btnH);
+  // Windows logo pixel
+  ctx.fillStyle='#ff0000';ctx.fillRect(btnX+6,btnY+6,6,6);
+  ctx.fillStyle='#00ff00';ctx.fillRect(btnX+13,btnY+6,6,6);
+  ctx.fillStyle='#0000ff';ctx.fillRect(btnX+6,btnY+13,6,6);
+  ctx.fillStyle='#ffff00';ctx.fillRect(btnX+13,btnY+13,6,6);
+  ctx.font='bold 10px "Courier Prime",monospace';ctx.fillStyle='#000';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('Start',btnX+24,btnY+12);
+  // Cursor
+  ctx.fillStyle='#fff';
+  [[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[1,1],[1,2],[1,3],[1,4],[1,5],[2,2],[2,3],[2,4],[3,3],[3,4],[4,4]].forEach(([dx,dy])=>{
+    ctx.fillRect(btnX+btnW+4+dx*3,btnY+btnH-4+dy*3,3,3);
+  });
+  ctx.fillStyle='#000';
+  [[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[1,1],[1,2],[1,3],[1,4],[1,5],[2,2],[2,3],[2,4],[3,3]].forEach(([dx,dy])=>{
+    ctx.fillRect(btnX+btnW+5+dx*3,btnY+btnH-3+dy*3,2,2);
+  });
+}},
+
+// ── 40: NEWJEANS COOL — Y2K kpop collagé 4 foto ──────────────
+{name:'NEWJEANS COOL',W:480,H:1400,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // ── Sky & grass background — draw FIRST before photos
+  const skyG=ctx.createLinearGradient(0,0,0,H*.7);
+  skyG.addColorStop(0,'#87ceeb');skyG.addColorStop(.6,'#b0e0ff');skyG.addColorStop(1,'#d4f0ff');
+  ctx.fillStyle=skyG;ctx.fillRect(0,0,W,H);
+  // Clouds
+  function cloud(cx,cy,r){
+    ctx.fillStyle='rgba(255,255,255,.85)';
+    [[0,0,r],[r*.6,-r*.3,r*.7],[r*1.1,0,r*.8],[-r*.5,0,r*.6]].forEach(([dx,dy,cr])=>{
+      ctx.beginPath();ctx.arc(cx+dx,cy+dy,cr,0,Math.PI*2);ctx.fill();
+    });
+  }
+  cloud(60,40,28);cloud(180,20,22);cloud(320,50,26);cloud(W-60,30,20);
+  cloud(40,120,18);cloud(W-80,100,22);
+  // Green golf grass — full bottom half
+  const grassG=ctx.createLinearGradient(0,H*.6,0,H);
+  grassG.addColorStop(0,'#5cb85c');grassG.addColorStop(1,'#2d7a2d');
+  ctx.fillStyle=grassG;ctx.fillRect(0,H*.6,W,H*.4);
+
+  // ── 4 photos as white-bordered polaroid-style, angled slightly
+  const pw=W-60,ph=Math.floor((H-120)/4)-12;
+  const angles=[-2,0,1.5,-1];
+  const xOffsets=[30,20,35,22];
+
+  for(let i=0;i<4;i++){
+    const py=14+i*(ph+16);
+    const px=xOffsets[i];
+    const angle=angles[i]*Math.PI/180;
+    const cx=px+pw/2, cy=py+ph/2;
+
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);
+
+    // Drop shadow
+    ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(-pw/2+5,-(ph+10)/2+5,pw,ph+10);
+    // White frame
+    ctx.fillStyle='#fff';ctx.fillRect(-pw/2,-(ph+10)/2,pw,ph+10);
+    // Photo
+    drawPhoto(ctx,I[i],-pw/2+4,-(ph+10)/2+4,pw-8,ph-2,0);
+    // Thin border
+    ctx.strokeStyle='rgba(0,0,0,.12)';ctx.lineWidth=1;ctx.strokeRect(-pw/2,-(ph+10)/2,pw,ph+10);
+
+    ctx.restore();
+  }
+
+  // ── Decorations overlaid on photos
+
+  // "COOL" speech bubble (top right of photo 1)
+  function coolBubble(x,y){
+    ctx.save();ctx.translate(x,y);ctx.rotate(0.1);
+    // Yellow oval
+    ctx.fillStyle='#fff200';ctx.beginPath();ctx.ellipse(0,0,38,22,0,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#e8a800';ctx.lineWidth=2;ctx.stroke();
+    // Squiggly tail (simplified)
+    ctx.strokeStyle='#ff4400';ctx.lineWidth=3;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(12,18);ctx.bezierCurveTo(20,28,30,24,38,32);ctx.stroke();
+    // COOL text
+    ctx.font='900 16px "Playfair Display",serif';ctx.fillStyle='#3333cc';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('COOL',0,0);
+    ctx.restore();
+  }
+  coolBubble(W-48,46);
+
+  // Goldfish decorations
+  function goldfish(x,y,size,flipX){
+    ctx.save();ctx.translate(x,y);if(flipX)ctx.scale(-1,1);
+    // Body
+    ctx.fillStyle='#ff6600';ctx.beginPath();ctx.ellipse(0,0,size*.6,size*.35,0,0,Math.PI*2);ctx.fill();
+    // Tail
+    ctx.fillStyle='#ff8800';ctx.beginPath();ctx.moveTo(size*.55,0);ctx.lineTo(size,-size*.3);ctx.lineTo(size,size*.3);ctx.closePath();ctx.fill();
+    // Belly
+    ctx.fillStyle='rgba(255,200,100,.5)';ctx.beginPath();ctx.ellipse(-size*.05,size*.08,size*.35,size*.18,0,0,Math.PI*2);ctx.fill();
+    // Eye
+    ctx.fillStyle='#000';ctx.beginPath();ctx.arc(-size*.3,-size*.08,size*.07,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-size*.32,-size*.1,size*.03,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }
+  goldfish(28,ph+20,35,false);
+  goldfish(18,ph*2+34,30,false);
+  goldfish(W-30,ph+16,32,true);
+  goldfish(W-22,ph*2+40,28,true);
+  goldfish(W-36,H*.63,34,true);
+
+  // Red telephone (right side between photo 2 and 3)
+  function telephone(x,y){
+    ctx.save();ctx.translate(x,y);
+    // Receiver shape
+    ctx.fillStyle='#cc1111';
+    ctx.beginPath();ctx.ellipse(0,0,14,36,0.4,0,Math.PI*2);ctx.fill();
+    // Ear/mouthpiece circles
+    ctx.fillStyle='#aa0000';ctx.beginPath();ctx.arc(-8,-28,10,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(8,28,10,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#333';ctx.beginPath();ctx.arc(-8,-28,5,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(8,28,5,0,Math.PI*2);ctx.fill();
+    ctx.restore();
+  }
+  telephone(W-22,ph*2+36);
+
+  // Yellow star burst (between photo 3 and 4)
+  function starburst(x,y,r,c){
+    ctx.save();ctx.translate(x,y);ctx.fillStyle=c;
+    ctx.beginPath();
+    for(let s=0;s<16;s++){
+      const a=s*Math.PI/8, rad=s%2===0?r:r*.45;
+      s===0?ctx.moveTo(Math.cos(a)*rad,Math.sin(a)*rad):ctx.lineTo(Math.cos(a)*rad,Math.sin(a)*rad);
+    }
+    ctx.closePath();ctx.fill();ctx.restore();
+  }
+  starburst(32,ph*3+50,40,'#ffd700');
+
+  // ── WRONG / RIGHT signpost at bottom
+  // Photo 4 ends at ~1304px, grass already covers H*0.65 onwards
+  // Place signpost below photo 4 in the grass area
+  const signBaseY=H-95; // bottom area for signpost
+
+  // Pole
+  ctx.fillStyle='#777';ctx.fillRect(W/2-3,signBaseY-48,6,50);
+  ctx.fillStyle='rgba(0,0,0,.15)';ctx.fillRect(W/2+3,signBaseY-46,4,48);
+
+  // Signs
+  function sign(x,y,text,dir){
+    const sw=130,sh=28;
+    ctx.fillStyle='#2e7d32';
+    ctx.beginPath();
+    if(dir==='left'){
+      ctx.moveTo(x,y);ctx.lineTo(x+sw,y);ctx.lineTo(x+sw,y+sh);ctx.lineTo(x,y+sh);ctx.lineTo(x-14,y+sh/2);ctx.closePath();
+    } else {
+      ctx.moveTo(x+14,y);ctx.lineTo(x+14+sw,y);ctx.lineTo(x+14+sw+14,y+sh/2);ctx.lineTo(x+14+sw,y+sh);ctx.lineTo(x+14,y+sh);ctx.closePath();
+    }
+    ctx.fill();
+    ctx.font='900 12px "Playfair Display",serif';ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(text,x+(dir==='left'?sw/2+2:sw/2+20),y+sh/2);
+  }
+  sign(W/2-144,signBaseY-46,'WRONG','left');
+  sign(W/2-2,signBaseY-20,'RIGHT','right');
+
+  // Goldfish near sign (in grass area)
+  goldfish(W-36,signBaseY-18,24,true);
+
+  // "HELLO I AM" name badge
+  const badgeX=W-110,badgeY=H-52;
+  ctx.fillStyle='#cc1111';ctx.fillRect(badgeX,badgeY,100,44);
+  ctx.fillStyle='#fff';ctx.fillRect(badgeX+4,badgeY+4,92,36);
+  ctx.font='bold 7px "Courier Prime",monospace';ctx.fillStyle='#cc1111';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('HELLO, I AM',badgeX+50,badgeY+6);
+}},
+
+// ── 41: STAMP BOX — prangko memories 6 foto 2 kolom ──────────
+{name:'STAMP BOX',W:740,H:1060,photosRequired:6,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // ── Background — deep red
+  ctx.fillStyle='#b71c1c';ctx.fillRect(0,0,W,H);
+
+  // ── Helper: draw postage stamp border (scalloped/perforated edge)
+  function stampBorder(x,y,w,h,perf){
+    const r=perf; // perforation radius
+    ctx.fillStyle='#f5e6d0';
+    ctx.fillRect(x,y,w,h);
+
+    // Punch out circles all around border
+    ctx.fillStyle='#b71c1c';
+    // Top & bottom
+    for(let px2=x+r;px2<x+w-r;px2+=r*2.2){
+      ctx.beginPath();ctx.arc(px2,y,r,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(px2,y+h,r,0,Math.PI*2);ctx.fill();
+    }
+    // Left & right
+    for(let py2=y+r;py2<y+h-r;py2+=r*2.2){
+      ctx.beginPath();ctx.arc(x,py2,r,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(x+w,py2,r,0,Math.PI*2);ctx.fill();
+    }
+    // Corners
+    [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(([cx,cy])=>{
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+    });
+  }
+
+  const PAD=18, GAP=12;
+  const stampW=(W-PAD*2-GAP)/2;
+  const stampH=H-PAD*2;
+  const PERF=10;
+
+  // Two stamps side by side
+  for(let col=0;col<2;col++){
+    const sx=PAD+col*(stampW+GAP);
+    stampBorder(sx,PAD,stampW,stampH,PERF);
+
+    // Inner content area
+    const innerX=sx+PERF+6, innerW=stampW-PERF*2-12;
+
+    // Title "A Box Of Memories"
+    ctx.font='italic 16px "Playfair Display",serif';
+    ctx.fillStyle='#8b1a1a';ctx.textAlign='left';ctx.textBaseline='top';
+    ctx.fillText('A Box Of Memories',innerX,PAD+PERF+8);
+
+    // 3 photos per stamp
+    const pW=innerW, pH=Math.floor((stampH-PERF*2-60-30)/3)-8;
+    for(let row=0;row<3;row++){
+      const py2=PAD+PERF+36+row*(pH+8);
+      // Photo border
+      ctx.fillStyle='#fff';ctx.fillRect(innerX-2,py2-2,pW+4,pH+4);
+      drawPhoto(ctx,I[col*3+row],innerX,py2,pW,pH,0);
+      ctx.strokeStyle='rgba(0,0,0,.1)';ctx.lineWidth=1;ctx.strokeRect(innerX,py2,pW,pH);
+    }
+
+    // Brand name at bottom
+    ctx.font='900 22px "Playfair Display",serif';ctx.fillStyle='#8b1a1a';ctx.textAlign='left';ctx.textBaseline='bottom';
+    // "o" with circle
+    ctx.fillText('o',innerX,PAD+stampH-PERF-10);
+    ctx.beginPath();ctx.arc(innerX+8,PAD+stampH-PERF-22,10,0,Math.PI*2);ctx.strokeStyle='#8b1a1a';ctx.lineWidth=2;ctx.stroke();
+    ctx.font='900 22px "Playfair Display",serif';ctx.fillStyle='#8b1a1a';ctx.textBaseline='bottom';
+    ctx.fillText('urbox',innerX+14,PAD+stampH-PERF-10);
+  }
+}},
+
+// ── 42: SPECIAL DAY — ticket booth 6 foto 2 kolom ────────────
+{name:'SPECIAL DAY',W:720,H:1100,photosRequired:6,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // ── Background
+  ctx.fillStyle='#3d0008';ctx.fillRect(0,0,W,H);
+
+  // ── Helper: draw ticket (with notched edges)
+  function ticket(x,y,w,h){
+    ctx.fillStyle='#fff';
+    ctx.fillRect(x,y,w,h);
+    // Notch circles on left and right edges (ticket tear line)
+    ctx.fillStyle='#3d0008';
+    for(let ny=y+20;ny<y+h-10;ny+=18){
+      ctx.beginPath();ctx.arc(x,ny,7,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(x+w,ny,7,0,Math.PI*2);ctx.fill();
+    }
+    // Top/bottom full circles for outer edges
+    ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(x+w,y,7,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(x,y+h,7,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(x+w,y+h,7,0,Math.PI*2);ctx.fill();
+  }
+
+  // Helper: draw barcode
+  function barcode(x,y,w,h){
+    const bars=40;
+    const bw=w/bars;
+    ctx.fillStyle='#000';
+    for(let b=0;b<bars;b++){
+      if(b%3!==2){ctx.fillRect(x+b*bw,y,bw*.7,h);}
+    }
+    ctx.font='6px "Courier Prime",monospace';ctx.fillStyle='#000';ctx.textAlign='center';ctx.textBaseline='top';
+    ctx.fillText('PIX3LBOOTH',x+w/2,y+h+2);
+  }
+
+  // Helper: camera icon
+  function cameraIcon(x,y,s,color){
+    ctx.fillStyle=color;
+    // Body
+    ctx.beginPath();ctx.roundRect(x,y+s*.3,s,s*.65,s*.08);ctx.fill();
+    // Top hump
+    ctx.beginPath();ctx.roundRect(x+s*.2,y,s*.3,s*.35,s*.06);ctx.fill();
+    // Lens
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x+s*.5,y+s*.6,s*.22,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=color;ctx.beginPath();ctx.arc(x+s*.5,y+s*.6,s*.14,0,Math.PI*2);ctx.fill();
+    // Flash
+    ctx.fillStyle='#fff';ctx.fillRect(x+s*.75,y+s*.38,s*.12,s*.1);
+    // Hearts
+    ctx.font=`${s*.22}px serif`;ctx.fillStyle='#cc1111';ctx.textAlign='left';ctx.textBaseline='top';
+    ctx.fillText('♥',x+s,y);ctx.fillText('♥',x+s*.85,y+s*.15);
+  }
+
+  const colW=(W-36)/2, GAP=12;
+
+  for(let col=0;col<2;col++){
+    const tx=6+col*(colW+GAP);
+    ticket(tx,6,colW,H-12);
+
+    const inner=tx+12, iW=colW-24;
+
+    // ── Left column layout
+    if(col===0){
+      // Barcode top
+      barcode(inner,18,iW,28);
+
+      // "Special Day" hand-lettered style
+      ctx.font='italic 900 26px "Playfair Display",serif';ctx.fillStyle='#3d0008';ctx.textAlign='right';ctx.textBaseline='top';
+      ctx.fillText('Special',inner+iW,60);
+      ctx.fillText('Day',inner+iW,90);
+
+      // Dashed divider
+      ctx.strokeStyle='#3d0008';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+      ctx.beginPath();ctx.moveTo(inner,126);ctx.lineTo(inner+iW,126);ctx.stroke();ctx.setLineDash([]);
+
+      // 3 photos
+      const ph=(H-12-140-16)/3-6;
+      for(let r=0;r<3;r++){
+        const py2=134+r*(ph+6);
+        ctx.strokeStyle='#ddd';ctx.lineWidth=1;ctx.strokeRect(inner,py2,iW,ph);
+        drawPhoto(ctx,I[r],inner,py2,iW,ph,0);
+      }
+
+      // Dashed divider bottom
+      ctx.strokeStyle='#3d0008';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+      const divY2=134+3*(((H-12-140-16)/3-6)+6)-6;
+      ctx.beginPath();ctx.moveTo(inner,divY2);ctx.lineTo(inner+iW,divY2);ctx.stroke();ctx.setLineDash([]);
+
+      // "Special Day" bottom
+      ctx.font='italic 900 22px "Playfair Display",serif';ctx.fillStyle='#3d0008';ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.fillText('Special',inner,divY2+4);ctx.fillText('Day',inner,divY2+28);
+
+      // Camera icon
+      cameraIcon(inner+iW-46,divY2+4,42,'#3d0008');
+
+      // PIX3LBOOTH bottom
+      ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='#3d0008';ctx.textAlign='center';ctx.textBaseline='bottom';
+      ctx.fillText('PIX3LBOOTH',inner+iW/2,H-16);
+
+    } else {
+      // ── Right column layout
+      // PIX3LBOOTH top label
+      ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='#3d0008';ctx.textAlign='center';ctx.textBaseline='top';
+      ctx.fillText('PIX3LBOOTH',inner+iW/2,14);
+
+      // Camera icon top-right
+      cameraIcon(inner+iW-48,8,38,'#3d0008');
+
+      // "Special Day" script top
+      ctx.font='italic 900 22px "Playfair Display",serif';ctx.fillStyle='#3d0008';ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.fillText('Special',inner,8);ctx.fillText('Day',inner,32);
+
+      // Dashed line
+      ctx.strokeStyle='#3d0008';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+      ctx.beginPath();ctx.moveTo(inner,60);ctx.lineTo(inner+iW,60);ctx.stroke();ctx.setLineDash([]);
+
+      // 3 photos
+      const ph2=(H-12-100-16)/3-6;
+      for(let r=0;r<3;r++){
+        const py2=66+r*(ph2+6);
+        ctx.strokeStyle='#ddd';ctx.lineWidth=1;ctx.strokeRect(inner,py2,iW,ph2);
+        drawPhoto(ctx,I[r+3],inner,py2,iW,ph2,0);
+      }
+
+      // Dashed divider
+      ctx.strokeStyle='#3d0008';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);
+      const divY3=66+3*((H-12-100-16)/3);
+      ctx.beginPath();ctx.moveTo(inner,divY3);ctx.lineTo(inner+iW,divY3);ctx.stroke();ctx.setLineDash([]);
+
+      // Barcode bottom
+      barcode(inner,divY3+6,iW,28);
+    }
+  }
+}},
+
+// ── 43: EVERY MOMENT — bold blue 2-col 4 foto each side ───────
+{name:'EVERY MOMENT',W:780,H:1180,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // ── Two side-by-side strips
+  const SW=(W-8)/2; // strip width
+
+  // Helper: draw one strip (left=white/silver, right=blue)
+  function strip(ox,theme){
+    const isBlue=theme==='blue';
+    const bg=isBlue?'#1565c0':'#e8eaf0';
+    const accent=isBlue?'#fff':'#1565c0';
+    const accentDim=isBlue?'rgba(255,255,255,.4)':'rgba(21,101,192,.35)';
+    const textMain=isBlue?'#fff':'#1565c0';
+    const textDim=isBlue?'rgba(255,255,255,.6)':'rgba(21,101,192,.5)';
+
+    // Background
+    ctx.fillStyle=bg;ctx.fillRect(ox,0,SW,H);
+
+    // Noise/grain texture
+    ctx.save();ctx.globalAlpha=.04;
+    for(let i=0;i<SW*H*.003;i++){
+      ctx.fillStyle=isBlue?'#fff':'#000';
+      ctx.fillRect(ox+Math.random()*SW,Math.random()*H,1.5,1.5);
+    }
+    ctx.globalAlpha=1;ctx.restore();
+
+    const PAD=16;
+
+    if(!isBlue){
+      // ── LEFT STRIP (white/silver) — text block top, 4 rounded photos
+      // Top section
+      ctx.fillStyle='rgba(21,101,192,.07)';ctx.fillRect(ox,0,SW,H*.38);
+
+      // Asterisk
+      ctx.font='900 20px "Courier Prime",monospace';ctx.fillStyle=accentDim;ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.fillText('*',ox+PAD,14);
+
+      // Version
+      ctx.font='bold 11px "Courier Prime",monospace';ctx.fillStyle=accentDim;ctx.textAlign='right';
+      ctx.fillText('1.0',ox+SW-PAD,14);
+
+      // Thin rule
+      ctx.fillStyle=accentDim;ctx.fillRect(ox+PAD*2+10,22,SW-PAD*2-14-18,1.5);
+
+      // EVERY MOMENT text — big bold
+      ctx.font='900 42px "Playfair Display",serif';ctx.fillStyle=textMain;ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.fillText('EVERY',ox+PAD,32);
+
+      // "matters." italic overlay
+      ctx.font='italic 16px "Playfair Display",serif';ctx.fillStyle=accent;ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.fillText('matters.',ox+PAD+4,82);
+
+      ctx.font='900 42px "Playfair Display",serif';ctx.fillStyle=textMain;ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.fillText('MOMENT',ox+PAD,90);
+
+      // Barcode
+      const bcX=ox+PAD,bcY=140,bcW=SW-PAD*2,bcH=18;
+      ctx.fillStyle=textMain;
+      for(let b=0;b<50;b++){if(b%5!==4){ctx.fillRect(bcX+b*(bcW/50),bcY,(bcW/50)*.65,bcH);}}
+      ctx.fillStyle=accentDim;ctx.fillRect(bcX,bcY+bcH+2,bcW,1.5);
+
+      // 4 rounded-rect photos
+      const ph=(H-H*.38-PAD-12)/4-8;
+      const py0=H*.38+PAD/2;
+      for(let r=0;r<4;r++){
+        const py2=py0+r*(ph+8);
+        ctx.save();
+        ctx.beginPath();ctx.roundRect(ox+PAD,py2,SW-PAD*2,ph,12);ctx.clip();
+        drawPhoto(ctx,I[r],ox+PAD,py2,SW-PAD*2,ph,0);
+        ctx.restore();
+        ctx.strokeStyle=accentDim;ctx.lineWidth=1.5;
+        ctx.beginPath();ctx.roundRect(ox+PAD,py2,SW-PAD*2,ph,12);ctx.stroke();
+      }
+
+      // Bottom section
+      ctx.fillStyle='rgba(21,101,192,.07)';ctx.fillRect(ox,H*.88,SW,H*.12);
+      ctx.font='900 26px "Playfair Display",serif';ctx.fillStyle=textMain;ctx.textAlign='left';ctx.textBaseline='middle';
+      ctx.fillText('EVERY',ox+PAD,H*.92);
+      ctx.font='italic 11px "Playfair Display",serif';ctx.fillStyle=accent;ctx.fillText('matters.',ox+PAD+2,H*.96);
+      ctx.font='900 26px "Playfair Display",serif';ctx.fillStyle=textMain;ctx.fillText('MOMENT',ox+PAD,H*.97);
+      // Asterisk + 1.0
+      ctx.font='900 16px "Courier Prime",monospace';ctx.fillStyle=accentDim;ctx.textAlign='left';ctx.textBaseline='bottom';
+      ctx.fillText('*',ox+PAD,H-8);
+      ctx.textAlign='right';ctx.fillText('1.0',ox+SW-PAD,H-8);
+      ctx.fillStyle=accentDim;ctx.fillRect(ox+PAD*2+10,H-14,SW-PAD*2-14-18,1.5);
+
+    } else {
+      // ── RIGHT STRIP (blue) — 4 photos top, text bottom
+      const PAD2=14;
+      // 4 rounded photos top area
+      const ph=(H*.72-PAD2)/4-8;
+      for(let r=0;r<4;r++){
+        const py2=PAD2+r*(ph+8);
+        ctx.save();
+        ctx.beginPath();ctx.roundRect(ox+PAD2,py2,SW-PAD2*2,ph,12);ctx.clip();
+        drawPhoto(ctx,I[r],ox+PAD2,py2,SW-PAD2*2,ph,0);
+        ctx.restore();
+        ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=1.5;
+        ctx.beginPath();ctx.roundRect(ox+PAD2,py2,SW-PAD2*2,ph,12);ctx.stroke();
+      }
+
+      // Bottom text block
+      const botY=H*.74;
+      ctx.font='900 42px "Playfair Display",serif';ctx.fillStyle=textMain;ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.fillText('EVERY',ox+PAD2,botY);
+      ctx.font='italic 16px "Playfair Display",serif';ctx.fillStyle='rgba(255,255,255,.75)';
+      ctx.fillText('matters.',ox+PAD2+4,botY+50);
+      ctx.font='900 42px "Playfair Display",serif';ctx.fillStyle=textMain;
+      ctx.fillText('MOMENT',ox+PAD2,botY+58);
+
+      // Barcode
+      const bcX2=ox+PAD2,bcY2=botY+114,bcW2=SW-PAD2*2,bcH2=16;
+      ctx.fillStyle='rgba(255,255,255,.8)';
+      for(let b=0;b<50;b++){if(b%5!==4){ctx.fillRect(bcX2+b*(bcW2/50),bcY2,(bcW2/50)*.65,bcH2);}}
+
+      // Bottom line
+      ctx.fillStyle='rgba(255,255,255,.35)';ctx.fillRect(ox+PAD2,botY+134,SW-PAD2*2,1.5);
+      ctx.font='900 16px "Courier Prime",monospace';ctx.fillStyle='rgba(255,255,255,.4)';ctx.textAlign='left';ctx.textBaseline='bottom';
+      ctx.fillText('*',ox+PAD2,H-8);ctx.textAlign='right';ctx.fillText('1.0',ox+SW-PAD2,H-8);
+    }
+  }
+
+  strip(0,'white');
+  // Divider line
+  ctx.fillStyle='rgba(0,0,0,.15)';ctx.fillRect(SW,0,8,H);
+  ctx.fillStyle='rgba(255,255,255,.1)';ctx.fillRect(SW+3,0,2,H);
+  strip(SW+8,'blue');
+}},
+
+
+// ── 44: SPIDER-MAN — Marvel red superhero 3 foto ─────────────
+{name:'SPIDER-MAN',W:500,H:1200,photosRequired:3,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // ── Deep red background
+  ctx.fillStyle='#cc0000';ctx.fillRect(0,0,W,H);
+
+  // ── Web pattern texture (faint)
+  ctx.save();ctx.strokeStyle='rgba(0,0,0,.08)';ctx.lineWidth=1;
+  // Radial web lines from top-center
+  for(let a=0;a<Math.PI;a+=Math.PI/12){
+    ctx.beginPath();ctx.moveTo(W/2,0);
+    ctx.lineTo(W/2+Math.cos(a-Math.PI/2)*W*1.5,Math.sin(a-Math.PI/2)*H);ctx.stroke();
+  }
+  // Concentric arcs
+  for(let r=40;r<W*2;r+=40){
+    ctx.beginPath();ctx.arc(W/2,0,r,0,Math.PI);ctx.stroke();
+  }
+  ctx.restore();
+
+  // ── Helper: draw a spiderweb corner
+  function webCorner(x,y,flipX,flipY){
+    ctx.save();ctx.translate(x,y);
+    if(flipX)ctx.scale(-1,1);if(flipY)ctx.scale(1,-1);
+    ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=1.2;
+    // Radial lines
+    const lines=[[0,0,50,0],[0,0,45,15],[0,0,35,30],[0,0,20,40],[0,0,0,50]];
+    lines.forEach(([x1,y1,x2,y2])=>{ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();});
+    // Arcs
+    [14,28,42].forEach(r=>{
+      ctx.beginPath();ctx.arc(0,0,r,0,Math.PI/2);ctx.stroke();
+    });
+    ctx.restore();
+  }
+  webCorner(0,0,false,false);
+  webCorner(W,0,true,false);
+  webCorner(0,H,false,true);
+  webCorner(W,H,true,true);
+
+  // ── Helper: draw Spidey face (simplified cartoon)
+  function spideyFace(x,y,size){
+    ctx.save();ctx.translate(x,y);
+    // Red head
+    ctx.fillStyle='#dd0000';ctx.beginPath();ctx.arc(0,0,size,0,Math.PI*2);ctx.fill();
+    // Black web lines
+    ctx.strokeStyle='#111';ctx.lineWidth=size*.06;
+    ctx.beginPath();ctx.moveTo(-size,0);ctx.lineTo(size,0);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,-size);ctx.lineTo(0,size);ctx.stroke();
+    ctx.beginPath();ctx.arc(0,0,size*.5,0,Math.PI*2);ctx.stroke();
+    // White eyes (oval)
+    ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.ellipse(-size*.3,-size*.1,size*.28,size*.18,-0.3,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(size*.3,-size*.1,size*.28,size*.18,0.3,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#111';ctx.lineWidth=size*.05;
+    ctx.beginPath();ctx.ellipse(-size*.3,-size*.1,size*.28,size*.18,-0.3,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.ellipse(size*.3,-size*.1,size*.28,size*.18,0.3,0,Math.PI*2);ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── Helper: cartoon Spidey full body (hanging)
+  function spideyBody(x,y,size,flip){
+    ctx.save();ctx.translate(x,y);if(flip)ctx.scale(-1,1);
+    // Web string
+    ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(0,-size*2.5);ctx.lineTo(0,-size);ctx.stroke();
+    // Body
+    ctx.fillStyle='#cc0000';ctx.beginPath();ctx.ellipse(0,0,size*.45,size*.6,0,0,Math.PI*2);ctx.fill();
+    // Blue torso patch
+    ctx.fillStyle='#003399';ctx.beginPath();ctx.ellipse(0,size*.05,size*.28,size*.4,0,0,Math.PI*2);ctx.fill();
+    // Arms
+    ctx.fillStyle='#cc0000';
+    ctx.beginPath();ctx.ellipse(-size*.5,size*.1,size*.15,size*.4,-0.6,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(size*.5,size*.1,size*.15,size*.4,0.6,0,Math.PI*2);ctx.fill();
+    // Legs
+    ctx.beginPath();ctx.ellipse(-size*.25,size*.7,size*.14,size*.35,0.2,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(size*.25,size*.7,size*.14,size*.35,-0.2,0,Math.PI*2);ctx.fill();
+    // Head
+    spideyFace(0,-size*.75,size*.42);
+    ctx.restore();
+  }
+
+  // ── HEADER
+  const HDR=65;
+  // Torn/brushstroke effect at top
+  ctx.fillStyle='#aa0000';
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(W,0);ctx.lineTo(W,HDR+10);
+  for(let x=W;x>=0;x-=20){ctx.lineTo(x,HDR+Math.sin(x*.2)*6+4);}
+  ctx.closePath();ctx.fill();
+  ctx.fillStyle='#ff2222';
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(W,0);ctx.lineTo(W,HDR-6);
+  for(let x=W;x>=0;x-=20){ctx.lineTo(x,HDR-8+Math.sin(x*.25)*5);}
+  ctx.closePath();ctx.fill();
+
+  // HELLO badge top-right
+  const badgeX=W*.52,badgeY=8;
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.roundRect(badgeX,badgeY,W*.4,52,4);ctx.fill();
+  ctx.strokeStyle='#cc0000';ctx.lineWidth=3;ctx.stroke();
+  // Red top portion
+  ctx.fillStyle='#cc0000';ctx.beginPath();ctx.roundRect(badgeX+3,badgeY+3,W*.4-6,18,[4,4,0,0]);ctx.fill();
+  ctx.font='bold 7px "Courier Prime",monospace';ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('HELLO',badgeX+W*.2,badgeY+12);
+  ctx.font='5px "Courier Prime",monospace';ctx.fillText('my name is',badgeX+W*.2,badgeY+20);
+  ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='#111';ctx.textBaseline='top';
+  ctx.fillText('Peter  Parker',badgeX+W*.2,badgeY+26);
+
+  // Spidey hanging top-left
+  spideyBody(52,50,28,false);
+
+  // ── 3 PHOTOS with torn/rough edges
+  const photos=[
+    {y:HDR+16,h:Math.floor((H-HDR-160)/3)-8},
+    {y:HDR+16+Math.floor((H-HDR-160)/3)+4,h:Math.floor((H-HDR-160)/3)-8},
+    {y:HDR+16+Math.floor((H-HDR-160)/3)*2+8,h:Math.floor((H-HDR-160)/3)-8},
+  ];
+  const pw=W-28;
+
+  photos.forEach(({y,h},i)=>{
+    // Torn paper bg behind photo
+    ctx.fillStyle='rgba(255,255,255,.15)';
+    ctx.beginPath();ctx.moveTo(14,y-4);
+    for(let x=14;x<=W-14;x+=10){ctx.lineTo(x,y-4+Math.sin(x*.5)*3);}
+    ctx.lineTo(W-14,y+h+4);
+    for(let x=W-14;x>=14;x-=10){ctx.lineTo(x,y+h+4+Math.sin(x*.5)*3);}
+    ctx.closePath();ctx.fill();
+
+    // Photo
+    drawPhoto(ctx,I[i],14,y,pw,h,0);
+
+    // Brush stroke frame
+    ctx.save();ctx.strokeStyle='rgba(0,0,0,.4)';ctx.lineWidth=3;
+    ctx.setLineDash([]);ctx.strokeRect(14,y,pw,h);ctx.restore();
+
+    // Spidey face peek at corner for photo 2
+    if(i===1) spideyFace(20,y+h-18,18);
+    if(i===1){
+      // Exclamation marks
+      ctx.font='900 22px "Playfair Display",serif';ctx.fillStyle='#fff200';ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.fillText('!!',W-36,y+h-30);
+    }
+  });
+
+  // ── DUDE. speech bubble between photo 2 and 3
+  const dY=photos[1].y+photos[1].h+2;
+  ctx.save();ctx.translate(22,dY+4);
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.roundRect(0,0,70,28,6);ctx.fill();
+  ctx.strokeStyle='#333';ctx.lineWidth=1.5;ctx.stroke();
+  // Tail
+  ctx.beginPath();ctx.moveTo(8,26);ctx.lineTo(0,38);ctx.lineTo(22,26);ctx.closePath();ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#333';ctx.stroke();
+  ctx.font='900 14px "Playfair Display",serif';ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('DUDE.',35,14);
+  ctx.restore();
+
+  // Spidey body right side
+  spideyBody(W-30,dY,24,true);
+
+  // ── FOOTER
+  const footY=H-72;
+  ctx.fillStyle='#aa0000';ctx.fillRect(0,footY,W,72);
+  // MARVEL text
+  ctx.font='bold 11px "Courier Prime",monospace';ctx.fillStyle='rgba(255,255,255,.7)';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('MARVEL',W/2,footY+8);
+  // SPIDER-MAN
+  ctx.font='900 32px "Playfair Display",serif';ctx.fillStyle='#fff';ctx.textBaseline='top';
+  ctx.fillText('SPIDER-MAN',W/2,footY+22);
+  // Spidey faces bottom corners
+  spideyFace(24,H-24,20);
+  spideyFace(W-24,H-24,20);
+}},
+
+// ── 45: TV FRAME — retro yellow TV pink polka 3 foto ──────────
+{name:'TV FRAME',W:480,H:1280,photosRequired:3,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // ── Pink polka dot background
+  ctx.fillStyle='#ff85c0';ctx.fillRect(0,0,W,H);
+  // Halftone dots
+  ctx.save();ctx.fillStyle='rgba(255,100,170,.5)';
+  for(let row=0;row*18<H+18;row++){
+    for(let col=0;col*18<W+18;col++){
+      ctx.beginPath();ctx.arc(col*18+(row%2)*9,row*18,4,0,Math.PI*2);ctx.fill();
+    }
+  }
+  ctx.restore();
+
+  // ── Helper: draw retro yellow TV
+  function drawTV(x,y,w,h,img,showAhhhh){
+    const tvColor='#f5c518';
+    const tvDark='#c9940a';
+    const tvShadow='rgba(0,0,0,.2)';
+
+    // TV outer body shadow
+    ctx.fillStyle=tvShadow;ctx.beginPath();ctx.roundRect(x+6,y+6,w,h,18);ctx.fill();
+
+    // TV outer body
+    ctx.fillStyle=tvColor;ctx.beginPath();ctx.roundRect(x,y,w,h,16);ctx.fill();
+
+    // Darker border
+    ctx.strokeStyle=tvDark;ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(x,y,w,h,16);ctx.stroke();
+
+    // Screen inset area — slightly recessed (left 72% of TV width)
+    const screenPad=14,screenW=Math.floor(w*.68),screenH=h-screenPad*2;
+    const screenX=x+screenPad,screenY=y+screenPad;
+
+    // Screen dark border (sunken effect)
+    ctx.fillStyle='#333';ctx.beginPath();ctx.roundRect(screenX-3,screenY-3,screenW+6,screenH+6,6);ctx.fill();
+
+    // Photo in screen
+    ctx.save();ctx.beginPath();ctx.roundRect(screenX,screenY,screenW,screenH,4);ctx.clip();
+    if(img)drawPhoto(ctx,img,screenX,screenY,screenW,screenH,0);
+    else{ctx.fillStyle='#87ceeb';ctx.fillRect(screenX,screenY,screenW,screenH);}
+    ctx.restore();
+
+    // Screen glare
+    ctx.save();ctx.globalAlpha=.18;ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.roundRect(screenX+4,screenY+4,screenW*.4,screenH*.3,3);ctx.fill();
+    ctx.restore();
+
+    // Right side controls panel
+    const ctrlX=screenX+screenW+8,ctrlW=w-screenPad-screenW-screenPad-2;
+    // Dial 1 (top)
+    const d1x=ctrlX+ctrlW/2,d1y=y+h*.28;
+    ctx.fillStyle=tvDark;ctx.beginPath();ctx.arc(d1x,d1y,ctrlW*.38,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#888';ctx.beginPath();ctx.arc(d1x,d1y,ctrlW*.28,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#555';ctx.beginPath();ctx.arc(d1x,d1y,ctrlW*.12,0,Math.PI*2);ctx.fill();
+    // Dial 2 (middle)
+    const d2x=ctrlX+ctrlW/2,d2y=y+h*.52;
+    ctx.fillStyle=tvDark;ctx.beginPath();ctx.arc(d2x,d2y,ctrlW*.32,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#888';ctx.beginPath();ctx.arc(d2x,d2y,ctrlW*.22,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#555';ctx.beginPath();ctx.arc(d2x,d2y,ctrlW*.1,0,Math.PI*2);ctx.fill();
+    // Buttons bottom
+    ctx.fillStyle='#333';
+    for(let b=0;b<3;b++){ctx.beginPath();ctx.arc(ctrlX+ctrlW/2,y+h*.68+b*14,4,0,Math.PI*2);ctx.fill();}
+    // Antenna
+    ctx.strokeStyle=tvDark;ctx.lineWidth=4;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(x+w*.25,y);ctx.lineTo(x+w*.18,y-30);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x+w*.4,y);ctx.lineTo(x+w*.48,y-28);ctx.stroke();
+
+    // Lightning bolt / caution sticker bottom
+    ctx.font='14px serif';ctx.fillStyle='#ffdd00';ctx.textAlign='right';ctx.textBaseline='bottom';
+    ctx.fillText('⚡',x+w-4,y+h+2);
+
+    // AHHHH! text top
+    if(showAhhhh){
+      ctx.save();ctx.translate(x+screenW*.3,y-8);ctx.rotate(-0.15);
+      ctx.font='900 18px "Playfair Display",serif';ctx.fillStyle='#ff8800';
+      ctx.strokeStyle='#000';ctx.lineWidth=3;ctx.textAlign='left';ctx.textBaseline='bottom';
+      ctx.strokeText('AHHHH!',0,0);ctx.fillText('AHHHH!',0,0);
+      ctx.restore();
+    }
+  }
+
+  // Drip element (yellow drip from TV edges)
+  function drip(x,y,w,c){
+    ctx.fillStyle=c;
+    [.15,.35,.55,.75,.9].forEach((p,i)=>{
+      const dh=14+i%3*8;
+      ctx.beginPath();ctx.ellipse(x+w*p,y+dh/2,6,dh/2,0,0,Math.PI*2);ctx.fill();
+      ctx.fillRect(x+w*p-5,y,10,dh/2);
+    });
+  }
+
+  // ── Layout: 3 TVs stacked, slightly overlapping/offset
+  const tv1W=W-20,tv1H=Math.floor(H*.31);
+  const tv2W=W-30,tv2H=Math.floor(H*.3);
+  const tv3W=W-24,tv3H=Math.floor(H*.28);
+
+  const tv1Y=8,tv1X=10;
+  const tv2Y=tv1Y+tv1H+6,tv2X=18;
+  const tv3Y=tv2Y+tv2H+4,tv3X=12;
+
+  drawTV(tv1X,tv1Y,tv1W,tv1H,I[0],true);
+  // Yellow drip between TV 1 and 2
+  drip(tv1X,tv1Y+tv1H-4,tv1W,'#f5c518');
+
+  drawTV(tv2X,tv2Y,tv2W,tv2H,I[1],false);
+  drip(tv2X,tv2Y+tv2H-4,tv2W,'#f5c518');
+
+  drawTV(tv3X,tv3Y,tv3W,tv3H,I[2],false);
+
+  // ── Yellow taxi cab at very bottom
+  const taxiY=tv3Y+tv3H+4;
+  const taxiH=H-taxiY-4;
+  // Taxi body
+  ctx.fillStyle='#f5c518';ctx.beginPath();ctx.roundRect(tv3X+tv3W*.1,taxiY+taxiH*.25,tv3W*.5,taxiH*.65,6);ctx.fill();
+  // Taxi top
+  ctx.beginPath();ctx.roundRect(tv3X+tv3W*.2,taxiY+taxiH*.04,tv3W*.33,taxiH*.3,[6,6,0,0]);ctx.fill();
+  // Windows
+  ctx.fillStyle='#87ceeb';ctx.fillRect(tv3X+tv3W*.22,taxiY+taxiH*.06,tv3W*.28,taxiH*.22);
+  // Wheels
+  ctx.fillStyle='#222';[tv3X+tv3W*.16,tv3X+tv3W*.48].forEach(wx=>{
+    ctx.beginPath();ctx.arc(wx,taxiY+taxiH*.95,taxiH*.13,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#aaa';ctx.beginPath();ctx.arc(wx,taxiY+taxiH*.95,taxiH*.07,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#222';
+  });
+  // TAXI text on door
+  ctx.font='bold 9px "Courier Prime",monospace';ctx.fillStyle='#000';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('TAXI',tv3X+tv3W*.35,taxiY+taxiH*.65);
+}},
+
+// ── 46: TV SERIES — mixed TV sticker collage 3 foto ──────────
+{name:'TV SERIES',W:480,H:1300,photosRequired:3,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // ── Sky blue + grass background
+  const skyG=ctx.createLinearGradient(0,0,0,H*.6);
+  skyG.addColorStop(0,'#87ceeb');skyG.addColorStop(1,'#b0e0ff');
+  ctx.fillStyle=skyG;ctx.fillRect(0,0,W,H);
+  // Grass
+  ctx.fillStyle='#5cb85c';ctx.fillRect(0,H*.58,W,H*.42);
+  // Clouds
+  ctx.fillStyle='rgba(255,255,255,.85)';
+  [[80,40,24],[220,25,18],[360,45,22],[W-70,30,20]].forEach(([cx,cy,r])=>{
+    [[0,0,r],[r*.6,-r*.3,r*.7],[r*1.1,0,r*.75],[-r*.5,0,r*.6]].forEach(([dx,dy,cr])=>{
+      ctx.beginPath();ctx.arc(cx+dx,cy+dy,cr,0,Math.PI*2);ctx.fill();
+    });
+  });
+
+  // ── Helper: draw a TV (can be yellow or red framed)
+  function drawTVframe(x,y,w,h,img,frameColor,rimColor){
+    // Shadow
+    ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.roundRect(x+7,y+7,w,h,20);ctx.fill();
+    // Body
+    ctx.fillStyle=frameColor;ctx.beginPath();ctx.roundRect(x,y,w,h,18);ctx.fill();
+    ctx.strokeStyle=rimColor;ctx.lineWidth=4;ctx.beginPath();ctx.roundRect(x,y,w,h,18);ctx.stroke();
+
+    // Screen
+    const sp=16,sw=Math.floor(w*.7),sh=h-sp*2;
+    const sx=x+sp,sy=y+sp;
+    ctx.fillStyle='#1a1a2e';ctx.beginPath();ctx.roundRect(sx-4,sy-4,sw+8,sh+8,6);ctx.fill();
+    ctx.save();ctx.beginPath();ctx.roundRect(sx,sy,sw,sh,5);ctx.clip();
+    if(img)drawPhoto(ctx,img,sx,sy,sw,sh,0);
+    else{ctx.fillStyle='#87ceeb';ctx.fillRect(sx,sy,sw,sh);}
+    ctx.restore();
+    // Glare
+    ctx.save();ctx.globalAlpha=.15;ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.roundRect(sx+4,sy+4,sw*.35,sh*.28,3);ctx.fill();ctx.restore();
+
+    // Right controls
+    const cx2=sx+sw+6,cw=w-sp-sw-sp+4;
+    // Big dial
+    ctx.fillStyle=rimColor;ctx.beginPath();ctx.arc(cx2+cw/2,y+h*.32,cw*.38,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#555';ctx.beginPath();ctx.arc(cx2+cw/2,y+h*.32,cw*.22,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=rimColor;ctx.beginPath();ctx.arc(cx2+cw/2,y+h*.58,cw*.28,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#555';ctx.beginPath();ctx.arc(cx2+cw/2,y+h*.58,cw*.16,0,Math.PI*2);ctx.fill();
+    // Small buttons
+    ctx.fillStyle='#333';
+    for(let b=0;b<3;b++){ctx.beginPath();ctx.arc(cx2+cw/2,y+h*.72+b*11,3.5,0,Math.PI*2);ctx.fill();}
+
+    // Antennae
+    ctx.strokeStyle=rimColor;ctx.lineWidth=3.5;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(x+w*.22,y+2);ctx.lineTo(x+w*.14,y-26);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(x+w*.38,y+2);ctx.lineTo(x+w*.46,y-24);ctx.stroke();
+  }
+
+  // ── Sticker decorators
+  function sparkle(x,y,s,c){
+    ctx.fillStyle=c;
+    for(let a=0;a<4;a++){
+      ctx.save();ctx.translate(x,y);ctx.rotate(a*Math.PI/4);
+      ctx.beginPath();ctx.moveTo(0,-s);ctx.lineTo(s*.15,-s*.15);ctx.lineTo(s,0);
+      ctx.lineTo(s*.15,s*.15);ctx.lineTo(0,s);ctx.lineTo(-s*.15,s*.15);
+      ctx.lineTo(-s,0);ctx.lineTo(-s*.15,-s*.15);ctx.closePath();ctx.fill();ctx.restore();
+    }
+  }
+  function stopSign(x,y,s){
+    ctx.fillStyle='#ff0';ctx.strokeStyle='#000';ctx.lineWidth=2;
+    ctx.beginPath();ctx.roundRect(x-s/2,y-s/2,s,s*.7,4);ctx.fill();ctx.stroke();
+    ctx.font=`bold ${s*.22}px "Courier Prime",monospace`;ctx.fillStyle='#000';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('CAUTION',x,y);
+  }
+
+  // ── Layout: 3 TVs — large top, medium middle, small bottom
+  // TV 1: yellow frame, large
+  const tv1W=W-16,tv1H=Math.floor(H*.35);
+  const tv1X=8,tv1Y=12;
+  drawTVframe(tv1X,tv1Y,tv1W,tv1H,I[0],'#f5c518','#c9940a');
+
+  // Sparkles around TV1
+  sparkle(tv1X+tv1W-10,tv1Y+10,16,'#ffe066');
+  sparkle(tv1X+8,tv1Y+tv1H*.3,12,'#fff');
+
+  // Sticker: dice emoji area (left of TV2)
+  ctx.font='28px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('🎲',22,tv1Y+tv1H+30);
+
+  // TV 2: yellow frame, medium, offset right
+  const tv2W=Math.floor(W*.82),tv2H=Math.floor(H*.32);
+  const tv2X=W-tv2W-6,tv2Y=tv1Y+tv1H+8;
+  drawTVframe(tv2X,tv2Y,tv2W,tv2H,I[1],'#f5c518','#c9940a');
+
+  // Sticker: fried egg (below TV2 left)
+  function friedEgg(x,y,s){
+    ctx.fillStyle='rgba(255,255,255,.9)';ctx.beginPath();ctx.ellipse(x,y,s,s*.65,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ffd700';ctx.beginPath();ctx.arc(x-s*.05,y-s*.05,s*.32,0,Math.PI*2);ctx.fill();
+  }
+  friedEgg(tv2X-18,tv2Y+tv2H*.6,22);
+
+  // TV 3: red frame, smaller, left side
+  const tv3W=Math.floor(W*.62),tv3H=Math.floor(H*.25);
+  const tv3X=6,tv3Y=tv2Y+tv2H+6;
+  drawTVframe(tv3X,tv3Y,tv3W,tv3H,I[2],'#cc2222','#8b0000');
+
+  // Caution sign sticker right of TV3
+  stopSign(tv3X+tv3W+30,tv3Y+tv3H*.5,44);
+
+  // Sparkles various
+  sparkle(tv3X+tv3W*.8,tv3Y-8,14,'#ffe066');
+  sparkle(16,tv3Y+tv3H/2,10,'#ffe066');
+
+  // Watch/clock sticker top-left area
+  ctx.font='26px serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('⌚',18,tv2Y+tv2H*.2);
+
+  // Lips sticker between TV1 and TV2 right side
+  ctx.font='24px serif';ctx.fillText('👄',W-20,tv1Y+tv1H+18);
+}},
+
+// ── 47: IPHONE GALLERY — dark mode photos app 3 foto ─────────
+{name:'IPHONE GALLERY',W:480,H:1300,photosRequired:3,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // ── iPhone body — dark mode black
+  // Outer phone shell
+  ctx.fillStyle='#1c1c1e';
+  ctx.beginPath();ctx.roundRect(0,0,W,H,36);ctx.fill();
+
+  // Screen area (slightly inset from body)
+  const SX=8,SY=8,SW=W-16,SH=H-16;
+  ctx.fillStyle='#000';
+  ctx.beginPath();ctx.roundRect(SX,SY,SW,SH,30);ctx.fill();
+
+  // Dynamic island (notch) — pill shape top center
+  ctx.fillStyle='#1c1c1e';
+  ctx.beginPath();ctx.roundRect(W/2-50,SY+8,100,28,14);ctx.fill();
+
+  // ── STATUS BAR
+  const statY=SY+12;
+  // Signal bars (Vi VoWiFi)
+  ctx.font='bold 9px "Courier Prime",monospace';
+  ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('all Vi VoWiFi',SX+14,statY+2);
+  // Time center
+  ctx.font='900 12px "Playfair Display",serif';
+  ctx.textAlign='center';ctx.fillText('2:17 PM',W/2,statY+2);
+  // Right icons
+  ctx.textAlign='right';ctx.font='9px "Courier Prime",monospace';
+  ctx.fillText('  )',W-SX-14,statY+2);
+  // Battery icon
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.roundRect(W-SX-38,statY-5,26,12,3);ctx.fill();
+  ctx.fillStyle='#1c1c1e';ctx.fillRect(W-SX-37,statY-4,24,10);
+  // Battery fill
+  ctx.fillStyle='#fff';ctx.fillRect(W-SX-37,statY-4,18,10);
+  // Battery tip
+  ctx.fillStyle='rgba(255,255,255,.6)';ctx.fillRect(W-SX-10,statY-2,3,6);
+  // Moon icon
+  ctx.fillStyle='#fff';ctx.font='10px serif';ctx.textAlign='right';
+  ctx.fillText('☽',W-SX-44,statY+3);
+
+  // ── HEADER SECTION
+  const hdrY=statY+18;
+
+  // Blue "+" button top left
+  ctx.fillStyle='#0a84ff';
+  ctx.font='900 22px "Playfair Display",serif';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('+',SX+14,hdrY);
+
+  // "Albums" title — big bold iOS font
+  ctx.font='900 32px "Playfair Display",serif';
+  ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('Albums',SX+14,hdrY+26);
+
+  // "My Albums" + "See All"
+  const myAlbY=hdrY+70;
+  ctx.font='900 14px "Playfair Display",serif';
+  ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('My Albums',SX+14,myAlbY);
+  ctx.font='bold 12px "Courier Prime",monospace';
+  ctx.fillStyle='#0a84ff';ctx.textAlign='right';
+  ctx.fillText('See All',W-SX-14,myAlbY+1);
+
+  // ── 3 ALBUM CARDS
+  const cardX=SX+14;
+  const cardW=SW-28;
+  const labelH=38; // space below each photo for label
+  const cardGap=10;
+  const totalAvail=H-16-(myAlbY+labelH)-(labelH*3+cardGap*2)-50; // 50 for bottom bar
+  const cardH=Math.floor(totalAvail/3);
+  const cardStartY=myAlbY+22;
+
+  const albumLabels=[
+    {name:'Recents',count:'1,958'},
+    {name:'highlights',count:'33'},
+    {name:'Favourites',count:'74'},
+  ];
+
+  for(let i=0;i<3;i++){
+    const cy=cardStartY+i*(cardH+labelH+cardGap);
+
+    // Card rounded background (dark grey)
+    ctx.fillStyle='#1c1c1e';
+    ctx.beginPath();ctx.roundRect(cardX,cy,cardW,cardH+labelH,14);ctx.fill();
+
+    // Photo — fills top rounded portion
+    ctx.save();
+    ctx.beginPath();ctx.roundRect(cardX,cy,cardW,cardH,[14,14,0,0]);ctx.clip();
+    if(I[i])drawPhoto(ctx,I[i],cardX,cy,cardW,cardH,0);
+    else{ctx.fillStyle='#2c2c2e';ctx.fillRect(cardX,cy,cardW,cardH);}
+    ctx.restore();
+
+    // Subtle border around card
+    ctx.strokeStyle='rgba(255,255,255,.08)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.roundRect(cardX,cy,cardW,cardH+labelH,14);ctx.stroke();
+
+    // Album name label
+    ctx.font='bold 13px "Courier Prime",monospace';
+    ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='top';
+    ctx.fillText(albumLabels[i].name,cardX+10,cy+cardH+8);
+
+    // Count in grey
+    ctx.font='11px "Courier Prime",monospace';
+    ctx.fillStyle='#8e8e93';
+    ctx.fillText(albumLabels[i].count,cardX+10,cy+cardH+23);
+  }
+
+  // ── BOTTOM TAB BAR (iOS style)
+  const tabY=H-16-46;
+  // Thin separator line
+  ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(SX,tabY,SW,1);
+  // Tab bar bg
+  ctx.fillStyle='rgba(28,28,30,.95)';ctx.fillRect(SX,tabY+1,SW,44);
+
+  // 4 tab items
+  const tabs=[
+    {icon:'⊟',label:'Library',active:false},
+    {icon:'♡',label:'For You',active:false},
+    {icon:'▤',label:'Albums',active:true},
+    {icon:'⌕',label:'Search',active:false},
+  ];
+  const tabW=SW/4;
+  tabs.forEach((tab,i)=>{
+    const tx=SX+i*tabW+tabW/2;
+    const ty=tabY+22;
+    const col=tab.active?'#0a84ff':'#636366';
+    ctx.font='16px serif';ctx.fillStyle=col;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(tab.icon,tx,ty-6);
+    ctx.font='bold 7px "Courier Prime",monospace';ctx.fillStyle=col;
+    ctx.fillText(tab.label,tx,ty+10);
+  });
+
+  // Home indicator (iPhone swipe bar)
+  ctx.fillStyle='rgba(255,255,255,.3)';
+  ctx.beginPath();ctx.roundRect(W/2-52,H-12,104,5,3);ctx.fill();
+}},
+
+// ── 48: SPOTIFY — now playing dark mode 4 foto ───────────────
+{name:'SPOTIFY',W:440,H:1220,photosRequired:4,
+async render(ctx,I,o){
+  const W=this.W,H=this.H;
+
+  // ── Full black background
+  ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
+
+  // ── TOP BAR — chevron down left, "..." right
+  const topH=36;
+  ctx.fillStyle='#000';ctx.fillRect(0,0,W,topH);
+
+  // Chevron down (collapse) — left
+  ctx.save();ctx.strokeStyle='#fff';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.beginPath();ctx.moveTo(18,14);ctx.lineTo(26,22);ctx.lineTo(34,14);ctx.stroke();
+  ctx.restore();
+
+  // "..." three dots — right
+  ctx.fillStyle='#fff';
+  [W-34,W-24,W-14].forEach(dx=>{
+    ctx.beginPath();ctx.arc(dx,20,2.5,0,Math.PI*2);ctx.fill();
+  });
+
+  // ── 4 PHOTOS stacked — full width, no gap, fills most of strip
+  const playerH=180; // player controls area at bottom
+  const photoAreaH=H-topH-playerH;
+  const ph=Math.floor(photoAreaH/4);
+  const pw=W;
+
+  for(let i=0;i<4;i++){
+    const py=topH+i*ph;
+    drawPhoto(ctx,I[i],0,py,pw,ph,0);
+
+    // Very subtle dark separator line between photos
+    if(i<3){
+      ctx.fillStyle='rgba(0,0,0,.6)';
+      ctx.fillRect(0,py+ph-1,W,2);
+    }
+  }
+
+  // ── PLAYER CONTROLS AREA — bottom dark panel
+  const ctrlY=topH+photoAreaH;
+
+  // Gradient from transparent → black over last photo
+  const fadeG=ctx.createLinearGradient(0,ctrlY-40,0,ctrlY+10);
+  fadeG.addColorStop(0,'rgba(0,0,0,0)');
+  fadeG.addColorStop(1,'rgba(0,0,0,.95)');
+  ctx.fillStyle=fadeG;ctx.fillRect(0,ctrlY-40,W,50);
+
+  // Solid black for controls
+  ctx.fillStyle='#000';ctx.fillRect(0,ctrlY,W,playerH);
+
+  const PAD=24;
+
+  // ── SONG INFO ROW
+  const infoY=ctrlY+14;
+
+  // Song title — white bold
+  const songTitle=o&&o.hl&&o.hl!=='MOMEN TAK TERLUPAKAN'?o.hl:'Song Title';
+  const singer=o&&o.sub&&o.sub!=='A City of Innovation, Nature, and Enduring Charm'?o.sub:'Singer';
+
+  ctx.font='900 17px "Playfair Display",serif';
+  ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='top';
+  // Truncate if too long
+  const titleText=songTitle.length>22?songTitle.substring(0,20)+'…':songTitle;
+  ctx.fillText(titleText,PAD,infoY);
+
+  // Singer — grey smaller
+  ctx.font='11px "Courier Prime",monospace';
+  ctx.fillStyle='#b3b3b3';ctx.textBaseline='top';
+  const singerText=singer.length>28?singer.substring(0,26)+'…':singer;
+  ctx.fillText(singerText,PAD,infoY+22);
+
+  // Green heart — right side
+  ctx.font='22px serif';ctx.fillStyle='#1db954';ctx.textAlign='right';ctx.textBaseline='middle';
+  ctx.fillText('♥',W-PAD,infoY+14);
+
+  // ── PROGRESS BAR
+  const progY=infoY+46;
+  const progW=W-PAD*2;
+
+  // Track background — dark grey bar
+  ctx.fillStyle='#4d4d4d';
+  ctx.beginPath();ctx.roundRect(PAD,progY,progW,3,2);ctx.fill();
+
+  // Progress — filled portion (~35% as in reference)
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.roundRect(PAD,progY,progW*.35,3,2);ctx.fill();
+
+  // Progress dot/thumb
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.arc(PAD+progW*.35,progY+1.5,6,0,Math.PI*2);ctx.fill();
+
+  // Time labels
+  ctx.font='bold 9px "Courier Prime",monospace';
+  ctx.fillStyle='#b3b3b3';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('1:12',PAD,progY+8);
+  ctx.textAlign='right';ctx.fillText('3:24',W-PAD,progY+8);
+
+  // ── PLAYBACK CONTROLS ROW
+  const ctrlRowY=progY+28;
+
+  // Skip back ⏮
+  function skipBack(x,y,s){
+    ctx.fillStyle='#fff';
+    // Triangle pointing left
+    ctx.beginPath();ctx.moveTo(x,y+s/2);ctx.lineTo(x+s*.8,y);ctx.lineTo(x+s*.8,y+s);ctx.closePath();ctx.fill();
+    ctx.beginPath();ctx.moveTo(x+s*.8,y+s/2);ctx.lineTo(x+s*1.6,y);ctx.lineTo(x+s*1.6,y+s);ctx.closePath();ctx.fill();
+    // Vertical bar
+    ctx.fillRect(x-3,y,3,s);
+  }
+
+  // Skip forward ⏭
+  function skipFwd(x,y,s){
+    ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+s*.8,y+s/2);ctx.lineTo(x,y+s);ctx.closePath();ctx.fill();
+    ctx.beginPath();ctx.moveTo(x+s*.8,y);ctx.lineTo(x+s*1.6,y+s/2);ctx.lineTo(x+s*.8,y+s);ctx.closePath();ctx.fill();
+    ctx.fillRect(x+s*1.6,y,3,s);
+  }
+
+  // Pause button ⏸ (circle with two bars)
+  function pauseBtn(cx,cy,r){
+    // Circle background — slightly lighter
+    ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+    // Two pause bars
+    const barW=r*.22,barH=r*.9,barGap=r*.18;
+    ctx.fillStyle='#000';
+    ctx.fillRect(cx-barGap-barW,cy-barH/2,barW,barH);
+    ctx.fillRect(cx+barGap,cy-barH/2,barW,barH);
+  }
+
+  const ctrlCY=ctrlRowY+20;
+  const btnS=16; // skip button size
+
+  skipBack(PAD+8,ctrlCY-btnS/2,btnS);
+  pauseBtn(W/2,ctrlCY,28);
+  skipFwd(W-PAD-8-btnS*1.6,ctrlCY-btnS/2,btnS);
+
+  // ── HOME INDICATOR
+  ctx.fillStyle='rgba(255,255,255,.25)';
+  ctx.beginPath();ctx.roundRect(W/2-50,H-10,100,4,2);ctx.fill();
 }},
 
 ];
