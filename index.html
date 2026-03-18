@@ -1,0 +1,3682 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Snapcan — Photobooth</title>
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ─── RESET & ROOT ─────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1a1208; --ink2:#2e2010;
+  --paper:#f5f0e8; --paper2:#ede8d8; --paper3:#e4dcc8;
+  --aged:#c8b99a; --aged2:#a89070;
+  --red:#8b1a1a; --red2:#6b1212;
+  --gold:#8b6914; --gold2:#6b5010;
+  --bg:#1e1508; --bg2:#2a1f0e;
+  --radius:2px;
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  font-family:'Libre Baskerville',serif;
+  color:var(--ink);
+  min-height:100vh;
+  background-image:
+    radial-gradient(ellipse at 20% 0%,rgba(139,105,20,0.15) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 100%,rgba(139,26,26,0.1) 0%,transparent 60%);
+}
+
+/* ─── SCROLLBAR ─────────────────────────────────────────────── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--aged2);border-radius:0}
+
+/* ─── MASTHEAD ─────────────────────────────────────────────── */
+.masthead{
+  background:var(--paper);
+  border-bottom:5px double var(--ink);
+  position:relative;
+  overflow:hidden;
+}
+.masthead::after{
+  content:'';position:absolute;inset:0;
+  background:url("data:image/svg+xml,%3Csvg width='4' height='4' viewBox='0 0 4 4' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='.5' fill='%231a1208' opacity='.06'/%3E%3C/svg%3E");
+  pointer-events:none;
+}
+.mast-top{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:6px 20px 0;font-family:'Courier Prime',monospace;font-size:9px;
+  color:var(--red);letter-spacing:1.5px;text-transform:uppercase;
+}
+.mast-top span{display:flex;align-items:center;gap:6px}
+.mast-ticker{background:var(--red);color:var(--paper);padding:2px 8px;font-size:8px;letter-spacing:2px}
+.mast-ornament{
+  text-align:center;font-size:9px;color:var(--aged);letter-spacing:4px;
+  padding:2px 0;overflow:hidden;white-space:nowrap;opacity:.7;
+}
+.mast-center{text-align:center;padding:4px 20px 6px;position:relative;z-index:1}
+.mast-title{
+  font-family:'UnifrakturMaguntia',cursive;
+  font-size:clamp(2.4rem,8vw,5rem);
+  line-height:.95;color:var(--ink);
+  text-shadow:3px 3px 0 rgba(200,185,154,0.5);
+  letter-spacing:-1px;
+}
+.mast-subtitle{
+  font-family:'Playfair Display',serif;font-style:italic;
+  font-size:clamp(9px,1.5vw,12px);color:var(--red);
+  letter-spacing:4px;text-transform:uppercase;margin-top:2px;
+}
+.mast-rule-triple{
+  height:8px;display:flex;flex-direction:column;gap:1px;margin:0 0 0;
+}
+.mast-rule-triple div{height:1px;background:var(--ink)}
+.mast-rule-triple div:nth-child(2){height:3px;background:var(--red)}
+.mast-meta{
+  display:grid;grid-template-columns:1fr auto 1fr;
+  align-items:center;gap:8px;
+  padding:4px 16px;font-family:'Courier Prime',monospace;
+  font-size:clamp(8px,1.2vw,10px);border-top:1px solid var(--ink);
+}
+.mast-meta-r{text-align:right}
+.mast-meta-c{
+  text-align:center;font-family:'UnifrakturMaguntia',cursive;
+  font-size:clamp(14px,2vw,18px);color:var(--red);
+}
+
+/* ─── STATUSBAR ─────────────────────────────────────────────── */
+.statusbar{
+  background:var(--ink2);color:var(--aged);
+  font-family:'Courier Prime',monospace;font-size:10px;
+  padding:5px 20px;text-align:center;letter-spacing:1.5px;
+  border-bottom:2px solid var(--red);
+  display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.status-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--aged);
+  flex-shrink:0;animation:pulse-dot 2s ease infinite;
+}
+.status-dot.active{background:#5cb85c;animation:pulse-dot 1s ease infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ─── APP LAYOUT ─────────────────────────────────────────────── */
+.app{
+  max-width:1340px;margin:0 auto;padding:16px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 380px;
+  gap:16px;
+}
+@media(max-width:900px){
+  .app{grid-template-columns:1fr;padding:10px}
+}
+
+/* ─── PANEL ──────────────────────────────────────────────────── */
+.panel{
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+  border-radius:var(--radius);
+  overflow:hidden;
+  position:relative;
+}
+.panel::before{
+  content:'';position:absolute;inset:0;
+  background:url("data:image/svg+xml,%3Csvg width='3' height='3' viewBox='0 0 3 3' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='.8' cy='.8' r='.4' fill='%231a1208' opacity='.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;
+}
+.panel>*{position:relative;z-index:1}
+
+.panel-hd{
+  background:var(--ink);color:var(--paper);
+  font-family:'Playfair Display',serif;font-weight:900;
+  font-size:11px;letter-spacing:2.5px;text-transform:uppercase;
+  padding:7px 14px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:3px solid var(--red);
+}
+.panel-hd-badge{
+  font-family:'Courier Prime',monospace;font-weight:400;
+  font-size:9px;letter-spacing:1px;color:var(--aged);
+}
+.panel-sub{
+  background:var(--paper3);border-bottom:1px solid var(--aged2);
+  font-family:'Courier Prime',monospace;font-size:9px;
+  color:var(--gold);padding:3px 14px;letter-spacing:1px;text-transform:uppercase;
+}
+
+/* ─── CAMERA ─────────────────────────────────────────────────── */
+.cam-outer{padding:14px}
+.cam-frame{
+  position:relative;background:#0a0a0a;
+  border:3px solid var(--aged2);
+  overflow:hidden;aspect-ratio:4/3;
+  box-shadow:inset 0 0 30px rgba(0,0,0,.5);
+}
+.cam-corner{position:absolute;width:20px;height:20px;z-index:15}
+.cam-corner.tl{top:6px;left:6px;border-top:2px solid var(--red);border-left:2px solid var(--red)}
+.cam-corner.tr{top:6px;right:6px;border-top:2px solid var(--red);border-right:2px solid var(--red)}
+.cam-corner.bl{bottom:6px;left:6px;border-bottom:2px solid var(--red);border-left:2px solid var(--red)}
+.cam-corner.br{bottom:6px;right:6px;border-bottom:2px solid var(--red);border-right:2px solid var(--red)}
+#video{width:100%;height:100%;object-fit:cover;display:block}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:30;transition:opacity .05s}
+.flash.go{opacity:1}
+#cdown-wrap{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:20;background:rgba(0,0,0,.6);backdrop-filter:blur(2px)}
+#cdown-num{font-family:'UnifrakturMaguntia',cursive;font-size:130px;color:var(--paper);text-shadow:0 0 40px rgba(139,26,26,.8),4px 4px 0 var(--red);animation:popnum 1s ease}
+@keyframes popnum{0%{transform:scale(2);opacity:0}70%{transform:scale(.95);opacity:1}100%{transform:scale(1);opacity:1}}
+.cam-hud{
+  position:absolute;bottom:8px;left:0;right:0;
+  display:flex;justify-content:center;gap:8px;z-index:10;
+}
+.hud-dot{width:10px;height:10px;border-radius:50%;border:1.5px solid rgba(255,255,255,.6);background:transparent;transition:all .3s}
+.hud-dot.taken{background:var(--paper);border-color:var(--paper)}
+.hud-dot.active{border-color:var(--red);background:rgba(139,26,26,.5);box-shadow:0 0 6px var(--red)}
+
+/* ─── CONTROLS ───────────────────────────────────────────────── */
+.ctrl-row{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+  margin-top:12px;
+}
+@media(max-width:480px){.ctrl-row{grid-template-columns:1fr 1fr}}
+.btn{
+  font-family:'Playfair Display',serif;font-weight:700;
+  font-size:11px;letter-spacing:.8px;text-transform:uppercase;
+  padding:10px 8px;border:2px solid var(--ink);
+  cursor:pointer;transition:all .15s;border-radius:var(--radius);
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  white-space:nowrap;
+}
+.btn-p{background:var(--ink);color:var(--paper)}
+.btn-p:hover:not(:disabled){background:var(--red);border-color:var(--red)}
+.btn-p:active:not(:disabled){transform:scale(.97)}
+.btn-s{background:var(--paper);color:var(--ink)}
+.btn-s:hover:not(:disabled){background:var(--paper3)}
+.btn-d{background:var(--red);color:var(--paper);border-color:var(--red)}
+.btn-d:hover:not(:disabled){background:var(--red2)}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+.btn-full{grid-column:1/-1}
+
+.timer-sel-wrap{
+  margin-top:10px;display:flex;align-items:center;gap:10px;
+  padding:8px 10px;background:var(--paper3);border:1px solid var(--aged2);
+  font-family:'Courier Prime',monospace;font-size:10px;color:var(--ink);
+}
+.timer-sel-wrap select{
+  font-family:'Courier Prime',monospace;font-size:10px;
+  border:1px solid var(--aged2);background:var(--paper);
+  padding:4px 6px;color:var(--ink);cursor:pointer;flex:1;
+}
+.slot-counter{margin-left:auto;font-weight:700;color:var(--red);font-size:11px}
+
+/* ─── PHOTO SLOTS ────────────────────────────────────────────── */
+.slots-area{padding:12px 14px}
+.slots-label{
+  font-family:'Courier Prime',monospace;font-size:9px;
+  letter-spacing:2px;text-transform:uppercase;color:var(--gold);
+  margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;
+}
+.slot-row{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.slot{
+  aspect-ratio:3/4;background:var(--ink);
+  border:2px solid var(--aged2);
+  position:relative;cursor:pointer;overflow:hidden;
+  transition:border-color .2s,box-shadow .2s;
+  border-radius:var(--radius);
+}
+.slot:hover{border-color:var(--red)}
+.slot.active{border-color:var(--red);border-width:2.5px;box-shadow:0 0 0 2px rgba(139,26,26,.3)}
+.slot img{width:100%;height:100%;object-fit:cover;display:block}
+.slot-num{
+  position:absolute;bottom:0;left:0;right:0;
+  background:rgba(26,18,8,.8);
+  color:var(--aged);font-family:'Courier Prime',monospace;
+  font-size:9px;text-align:center;padding:2px 0;
+}
+.slot-empty-inner{
+  position:absolute;inset:0;display:flex;
+  align-items:center;justify-content:center;flex-direction:column;gap:4px;
+}
+.slot-empty-inner svg{opacity:.25}
+.slot-check{
+  position:absolute;top:3px;right:3px;
+  background:var(--red);width:14px;height:14px;
+  display:flex;align-items:center;justify-content:center;border-radius:50%;
+}
+
+/* ─── FIELDS ─────────────────────────────────────────────────── */
+.fields{padding:0 14px 12px}
+.field{margin-bottom:10px}
+.field label{
+  display:block;font-family:'Courier Prime',monospace;
+  font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--gold);margin-bottom:4px;
+}
+.field input{
+  width:100%;padding:7px 10px;
+  background:var(--paper3);border:1.5px solid var(--aged2);
+  font-family:'Playfair Display',serif;font-size:14px;
+  color:var(--ink);border-radius:var(--radius);
+  transition:border-color .2s;
+}
+.field input:focus{outline:none;border-color:var(--ink);background:var(--paper)}
+.field input.sm{font-family:'Courier Prime',monospace;font-size:11px}
+.field input::placeholder{color:var(--aged);font-style:italic}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* ─── LIVE PREVIEW ───────────────────────────────────────────── */
+.preview-stage{
+  position:relative;background:#0e0a04;
+  min-height:240px;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+  background-image:
+    repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(255,255,255,.015) 28px,rgba(255,255,255,.015) 29px),
+    repeating-linear-gradient(90deg,transparent,transparent 28px,rgba(255,255,255,.015) 28px,rgba(255,255,255,.015) 29px);
+}
+.preview-vignette{
+  position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.5) 100%);
+}
+#preview-canvas{
+  max-width:calc(100% - 20px);max-height:500px;display:block;
+  box-shadow:0 12px 48px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.05);
+  position:relative;z-index:1;transition:opacity .3s;
+}
+.preview-spinner-wrap{
+  position:absolute;inset:0;z-index:10;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;
+  background:rgba(10,6,2,.8);opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.preview-spinner-wrap.show{opacity:1}
+.spinner{
+  width:32px;height:32px;border:2px solid rgba(200,185,154,.3);
+  border-top-color:var(--red);border-radius:50%;animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner-txt{font-family:'Courier Prime',monospace;font-size:10px;color:var(--aged);letter-spacing:2px;animation:blink 1.4s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.preview-badge{
+  position:absolute;top:10px;left:10px;z-index:5;
+  background:var(--red);color:var(--paper);
+  font-family:'Courier Prime',monospace;font-size:8px;
+  padding:3px 8px;letter-spacing:2px;text-transform:uppercase;
+}
+.preview-name{
+  position:absolute;bottom:10px;right:10px;z-index:5;
+  background:rgba(26,18,8,.85);color:var(--aged);
+  font-family:'Courier Prime',monospace;font-size:8px;
+  padding:3px 8px;letter-spacing:1px;text-transform:uppercase;
+}
+.preview-actions{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px 14px 14px;
+  background:var(--paper3);border-top:1px solid var(--aged2);
+}
+
+/* ─── LAYOUT GRID ────────────────────────────────────────────── */
+.layout-scroll{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:8px;padding:12px;
+}
+@media(max-width:480px){.layout-scroll{grid-template-columns:repeat(3,1fr);gap:6px}}
+.layout-thumb{
+  border:2px solid var(--aged2);cursor:pointer;
+  position:relative;overflow:hidden;
+  transition:all .18s;background:var(--paper3);
+  aspect-ratio:3/4;border-radius:var(--radius);
+}
+.layout-thumb:hover{border-color:var(--ink);transform:scale(1.04);z-index:2}
+.layout-thumb.sel{border-color:var(--red);border-width:2.5px;box-shadow:0 0 0 2px rgba(139,26,26,.25)}
+.layout-thumb canvas{width:100%;height:100%;display:block}
+.layout-lbl{
+  position:absolute;bottom:0;left:0;right:0;
+  background:rgba(26,18,8,.9);color:var(--paper);
+  font-family:'Courier Prime',monospace;font-size:8px;
+  text-align:center;padding:3px 2px;letter-spacing:.5px;text-transform:uppercase;
+}
+.layout-sel-dot{
+  position:absolute;top:4px;right:4px;
+  width:10px;height:10px;border-radius:50%;background:var(--red);
+  display:none;box-shadow:0 0 4px rgba(0,0,0,.5);
+}
+.layout-thumb.sel .layout-sel-dot{display:block}
+
+/* ─── MOBILE STICKY BOTTOM BAR ───────────────────────────────── */
+@media(max-width:900px){
+  .mobile-sticky{
+    position:fixed;bottom:0;left:0;right:0;z-index:100;
+    background:var(--ink);border-top:3px solid var(--red);
+    padding:10px 14px;display:flex;gap:8px;
+    box-shadow:0 -4px 20px rgba(0,0,0,.5);
+  }
+  .mobile-sticky .btn{flex:1;font-size:10px;padding:10px 6px}
+  body{padding-bottom:70px}
+}
+@media(min-width:901px){.mobile-sticky{display:none}}
+
+/* ─── MODAL ─────────────────────────────────────────────────── */
+.modal-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,.95);
+  z-index:1000;display:none;align-items:center;justify-content:center;
+  padding:16px;
+}
+.modal-bg.open{display:flex}
+.modal-inner{
+  position:relative;max-width:min(600px,95vw);
+  max-height:92vh;overflow:auto;
+}
+.modal-img{display:block;max-width:100%;box-shadow:0 0 80px rgba(0,0,0,.8)}
+.modal-bar{
+  position:absolute;top:-42px;left:0;right:0;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.modal-title{font-family:'Courier Prime',monospace;font-size:11px;color:var(--aged);letter-spacing:2px}
+.modal-close{
+  background:var(--red);border:none;color:var(--paper);
+  font-family:'Courier Prime',monospace;font-size:11px;
+  cursor:pointer;padding:5px 14px;letter-spacing:1px;
+}
+.modal-close:hover{background:var(--red2)}
+.modal-dl-bar{
+  background:rgba(26,18,8,.9);padding:10px 14px;
+  display:flex;gap:8px;justify-content:flex-end;
+  border-top:1px solid var(--aged2);
+}
+
+/* ─── FOOTER ─────────────────────────────────────────────────── */
+.site-footer{
+  background:var(--ink);border-top:3px solid var(--red);
+  padding:28px 20px 20px;text-align:center;
+  margin-top:24px;
+}
+.footer-ornament{font-size:10px;color:var(--aged2);letter-spacing:4px;margin-bottom:12px}
+.footer-title{
+  font-family:'UnifrakturMaguntia',cursive;
+  font-size:clamp(1.4rem,4vw,2.2rem);color:var(--paper);
+  text-shadow:2px 2px 0 rgba(139,105,20,.4);margin-bottom:4px;
+}
+.footer-love{
+  font-family:'Special Elite',cursive;font-size:13px;
+  color:var(--aged);letter-spacing:1px;margin-bottom:16px;line-height:1.7;
+}
+.footer-love span{color:var(--red);font-size:15px}
+.footer-rule{height:1px;background:var(--aged2);margin:14px auto;max-width:300px;opacity:.4}
+.footer-ig{
+  display:inline-flex;align-items:center;gap:8px;
+  margin-top:14px;padding:8px 18px;
+  background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);
+  border-radius:24px;
+  text-decoration:none;
+  transition:transform .2s, opacity .2s;
+}
+.footer-ig:hover{transform:scale(1.05);opacity:.92;}
+.footer-ig svg{width:18px;height:18px;fill:#fff;flex-shrink:0;}
+.footer-ig span{
+  font-family:'Courier Prime',monospace;font-size:12px;
+  color:#fff;font-weight:700;letter-spacing:.5px;
+}
+.footer-meta{
+  font-family:'Courier Prime',monospace;font-size:9px;
+  color:var(--aged2);letter-spacing:1.5px;text-transform:uppercase;
+  line-height:1.8;
+}
+@media(max-width:900px){.site-footer{padding-bottom:90px}}
+
+/* ─── ANIMATIONS ─────────────────────────────────────────────── */
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.panel{animation:fadein .4s ease both}
+.panel:nth-child(2){animation-delay:.08s}
+.panel:nth-child(3){animation-delay:.16s}
+</style>
+</head>
+<body>
+
+<!-- ═══ MASTHEAD ═══════════════════════════════════════════════ -->
+<div class="masthead">
+  <div class="mast-top">
+    <span><span class="mast-ticker">LIVE</span> PHOTOBOOTH</span>
+    <span id="meta-date-top" style="font-size:8px;opacity:.7">---</span>
+    <span style="text-align:right">EDISI KORAN ✦</span>
+  </div>
+  <div class="mast-ornament">✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦</div>
+  <div class="mast-center">
+    <div class="mast-title">Snapcan</div>
+    <div class="mast-subtitle">The Daily Photographic Chronicle &mdash; Est. MCMXXIV</div>
+  </div>
+  <div class="mast-meta">
+    <span id="meta-date">—</span>
+    <span class="mast-meta-c">✦</span>
+    <span class="mast-meta-r">Harga: Gratis</span>
+  </div>
+  <div class="mast-rule-triple"><div></div><div></div><div></div></div>
+</div>
+
+<div class="statusbar" id="statusbar">
+  <div class="status-dot" id="status-dot"></div>
+  <span id="status-txt">Sistem siap — pilih layout & aktifkan kamera</span>
+</div>
+
+<!-- ═══ APP ════════════════════════════════════════════════════ -->
+<div class="app">
+
+  <!-- LEFT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+
+    <!-- CAMERA PANEL -->
+    <div class="panel">
+      <div class="panel-hd">
+        <span>📷 Ruang Kamera</span>
+        <span class="panel-hd-badge" id="cam-badge">OFF</span>
+      </div>
+      <div class="cam-outer">
+        <div class="cam-frame">
+          <video id="video" autoplay muted playsinline></video>
+          <div class="cam-corner tl"></div><div class="cam-corner tr"></div>
+          <div class="cam-corner bl"></div><div class="cam-corner br"></div>
+          <div class="flash" id="flash"></div>
+          <div id="cdown-wrap"><span id="cdown-num">3</span></div>
+          <div class="cam-hud" id="cam-hud">
+            <div class="hud-dot" id="hd0"></div><div class="hud-dot" id="hd1"></div>
+            <div class="hud-dot" id="hd2"></div><div class="hud-dot" id="hd3"></div>
+            <div class="hud-dot" id="hd4"></div><div class="hud-dot" id="hd5"></div>
+          </div>
+        </div>
+
+        <div class="timer-sel-wrap">
+          <span>⏱</span>
+          <select id="timer-sel">
+            <option value="0">Tanpa Timer</option>
+            <option value="3" selected>3 Detik</option>
+            <option value="5">5 Detik</option>
+            <option value="10">10 Detik</option>
+          </select>
+          <span class="slot-counter">Slot <span id="slot-ind">1</span>/4</span>
+        </div>
+
+        <div class="ctrl-row">
+          <button class="btn btn-p" id="btn-cam" onclick="startCam()">▶ Kamera</button>
+          <button class="btn btn-p" id="btn-cap" onclick="doCapture()" disabled>📸 Foto</button>
+          <button class="btn btn-s" id="btn-ret" onclick="retake()" disabled>↩ Ulang</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHOTO SLOTS -->
+    <div class="panel">
+      <div class="panel-hd">
+        <span>🗞 Bidikan — 4 Slot</span>
+        <span class="panel-hd-badge" id="slots-badge">0/4</span>
+      </div>
+      <div class="slots-area">
+        <div class="slots-label">
+          <span>Klik slot untuk pilih</span>
+          <span id="slots-status" style="color:var(--red)">Belum ada foto</span>
+        </div>
+        <div class="slot-row" id="slot-row"></div>
+      </div>
+
+      <!-- FIELDS -->
+      <div class="panel-sub">Teks Koran</div>
+      <div class="fields">
+        <div class="field" style="margin-top:10px">
+          <label>🗞 Nama Koran (di Strip)</label>
+          <input id="inp-papername" type="text" placeholder="Snapcan" maxlength="30" style="font-family:'UnifrakturMaguntia',cursive;font-size:18px">
+        </div>
+        <div class="field">
+          <label>Judul Utama / Nama Kota</label>
+          <input id="inp-hl" type="text" placeholder="BANDUNG — KOTA KENANGAN" maxlength="60">
+        </div>
+        <div class="field">
+          <label>Sub-Judul</label>
+          <input id="inp-sub" class="sm" type="text" placeholder="A City of Innovation, Nature, and Enduring Charm" maxlength="80">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Keterangan Foto</label>
+            <input id="inp-cap" class="sm" type="text" placeholder="Kenangan abadi..." maxlength="80">
+          </div>
+          <div class="field">
+            <label>Edisi / Nomor</label>
+            <input id="inp-ed" class="sm" type="text" placeholder="Edisi No. 1" maxlength="20">
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+
+    <!-- LIVE PREVIEW -->
+    <div class="panel">
+      <div class="panel-hd">
+        <span>👁 Preview Langsung</span>
+        <span class="panel-hd-badge" id="preview-name-badge">—</span>
+      </div>
+      <div class="preview-stage" id="preview-stage">
+        <div class="preview-vignette"></div>
+        <canvas id="preview-canvas"></canvas>
+        <div class="preview-badge" id="preview-badge">PRATINJAU</div>
+        <div class="preview-name" id="preview-layout-name">—</div>
+        <div class="preview-spinner-wrap" id="spinner-wrap">
+          <div class="spinner"></div>
+          <span class="spinner-txt">MERENDER...</span>
+        </div>
+      </div>
+      <div class="preview-actions">
+        <button class="btn btn-p" id="btn-dl" onclick="downloadStrip()" disabled>⬇ Unduh</button>
+        <button class="btn btn-s" id="btn-zoom" onclick="openModal()" disabled>🔍 Zoom</button>
+        <button class="btn btn-s" id="btn-shr" onclick="shareStrip()" disabled>⬆ Share</button>
+      </div>
+    </div>
+
+    <!-- LAYOUT GRID -->
+    <div class="panel">
+      <div class="panel-hd">
+        <span>📰 Pilih Layout</span>
+        <span class="panel-hd-badge">22 Pilihan</span>
+      </div>
+      <div class="layout-scroll" id="layout-grid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MOBILE STICKY BAR -->
+<div class="mobile-sticky" id="mobile-bar">
+  <button class="btn btn-p" id="mbtn-cam" onclick="startCam()">▶ Kamera</button>
+  <button class="btn btn-p" id="mbtn-cap" onclick="doCapture()" disabled>📸 Foto</button>
+  <button class="btn btn-d" onclick="resetAll()">↺ Reset</button>
+  <button class="btn btn-p" id="mbtn-dl" onclick="downloadStrip()" disabled>⬇ Unduh</button>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal-inner">
+    <div class="modal-bar">
+      <span class="modal-title" id="modal-title">PREVIEW STRIP</span>
+      <button class="modal-close" onclick="closeModal()">✕ TUTUP</button>
+    </div>
+    <img class="modal-img" id="modal-img" src="" alt="">
+    <div class="modal-dl-bar">
+      <button class="btn btn-p" onclick="downloadStrip()" style="font-size:11px;padding:8px 16px">⬇ Unduh PNG</button>
+    </div>
+  </div>
+</div>
+
+<canvas id="wc" style="display:none"></canvas>
+
+<!-- ═══ FOOTER ═════════════════════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="footer-ornament">✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦</div>
+  <div class="footer-title">Snapcan</div>
+  <div class="footer-love">
+    Dibuat dengan <span>♥</span> dan sepenuh hati<br>
+    Karya ini sepenuhnya <strong style="color:var(--gold)">gratis</strong> untuk semua orang
+  </div>
+  <div class="footer-rule"></div>
+  <!-- Instagram link -->
+  <a class="footer-ig" href="https://www.instagram.com/youungsirr/" target="_blank" rel="noopener">
+    <!-- Instagram official logo SVG -->
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+    </svg>
+    <span>@youungsirr</span>
+  </a>
+  <div class="footer-rule"></div>
+  <div class="footer-meta">
+    The Daily Photographic Chronicle &mdash; Est. MCMXXIV<br>
+    ✦ &nbsp; Foto Kenangan Bergaya Koran &nbsp; ✦<br>
+    <span id="footer-year"></span>
+  </div>
+  <div class="footer-ornament" style="margin-top:12px;margin-bottom:0">✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦</div>
+</footer>
+<script>
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let stream=null, photos=[null,null,null,null,null,null], curSlot=0, selLayout=0, camReady=false;
+let previewImgs=[null,null,null,null,null,null], previewTimer=null;
+
+// Date
+const D=new Date();
+const dateStr=D.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+const dateFullStr=D.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
+document.getElementById('meta-date').textContent=dateFullStr;
+document.getElementById('meta-date-top').textContent=dateStr;
+
+// ══════════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════════
+const loadImg=src=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src;});
+
+function drawPhoto(ctx,img,x,y,w,h,sepia=0.22){
+  ctx.save();
+  ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();
+  if(img){
+    const sc=Math.max(w/img.width,h/img.height);
+    const dw=img.width*sc,dh=img.height*sc;
+    ctx.drawImage(img,x+(w-dw)/2,y+(h-dh)/2,dw,dh);
+    if(sepia>0){
+      ctx.save();
+      ctx.globalCompositeOperation='multiply';
+      ctx.fillStyle=`rgba(180,140,90,${sepia})`;
+      ctx.fillRect(x,y,w,h);
+      ctx.restore();
+    }
+  } else {
+    ctx.fillStyle='#888';ctx.fillRect(x,y,w,h);
+    ctx.fillStyle='rgba(0,0,0,.1)';
+    for(let i=0;i<Math.max(w,h)*2;i+=12){ctx.fillRect(x+i-h,y,8,h);}
+    ctx.fillStyle='rgba(255,255,255,.15)';
+    ctx.font=`${Math.min(w,h)*.12}px "Courier Prime",monospace`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('FOTO',x+w/2,y+h/2);
+  }
+  ctx.restore();
+}
+
+function wrapText(ctx,text,x,y,maxW,lh,maxLines=99){
+  if(!text)return y;
+  const words=text.split(' ');let line='',yy=y,lines=0;
+  for(const w of words){
+    const t=line?line+' '+w:w;
+    if(ctx.measureText(t).width>maxW&&line){
+      ctx.fillText(line,x,yy);line=w;yy+=lh;lines++;if(lines>=maxLines)break;
+    } else line=t;
+  }
+  if(line&&lines<maxLines)ctx.fillText(line,x,yy);
+  return yy+lh;
+}
+
+function rule(ctx,x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x,y,w,h);}
+
+function tripleRule(ctx,x,y,W){
+  rule(ctx,x,y,W,2,'#1a1208');rule(ctx,x,y+3,W,1,'#8b6914');rule(ctx,x,y+5,W,2,'#1a1208');
+}
+
+function ornateRule(ctx,x,y,W,color='#1a1208'){
+  rule(ctx,x,y,W,2,color);rule(ctx,x,y+3,W,.5,'#8b6914');rule(ctx,x,y+5,W,2,color);
+  ctx.font='11px serif';ctx.fillStyle='#8b6914';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('✦',x+W/2,y);
+}
+
+function tex(ctx,W,H,a=.03){
+  ctx.save();
+  for(let i=0;i<W*H*.002;i++){const g=Math.random()*40|0;ctx.globalAlpha=a*Math.random();ctx.fillStyle=`rgb(${g+70},${g+40},${g+5})`;ctx.fillRect(Math.random()*W,Math.random()*H,1,1);}
+  ctx.globalAlpha=1;ctx.restore();
+}
+
+function addVignette(ctx,W,H,a=.5){
+  const g=ctx.createRadialGradient(W/2,H/2,H*.2,W/2,H/2,H*.9);
+  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${a})`);
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+}
+
+function body(ctx,text,x,y,W,lh,maxH,font='8.5px "Libre Baskerville",serif'){
+  ctx.save();ctx.font=font;ctx.fillStyle='#1a1208';ctx.textAlign='left';ctx.textBaseline='top';
+  const words=text.split(' ');let line='',yy=y;
+  for(const w of words){
+    const t=line?line+' '+w:w;
+    if(yy+lh>maxH)break;
+    if(ctx.measureText(t).width>W&&line){ctx.fillText(line,x,yy);line=w;yy+=lh;}
+    else line=t;
+  }
+  if(line&&yy+lh<=maxH)ctx.fillText(line,x,yy);
+  ctx.restore();return yy+lh;
+}
+
+function lorem(n=120){
+  const pool='Peristiwa luar biasa ini menjadi sorotan masyarakat luas. Laporan eksklusif redaksi mengungkap fakta-fakta mengejutkan di balik momen bersejarah tersebut. Warga setempat menyambut dengan penuh antusias. Para saksi mata memberikan kesaksian mendalam yang tidak terlupakan. Ribuan orang turut hadir menyaksikan peristiwa langka ini dari berbagai sudut pandang. Pemerintah daerah segera mengambil langkah nyata. Seluruh lapisan masyarakat bersatu dalam satu semangat kebersamaan yang hangat dan penuh makna mendalam. Catatan sejarah mencatat momen ini sebagai tonggak penting peradaban kota. Generasi mendatang akan mengenang peristiwa ini selamanya dalam ingatan kolektif mereka yang berharga.';
+  let result='';while(result.length<n)result+=pool+' ';return result.substring(0,n)+'...';
+}
+
+// Draw a dense text column with drop cap option
+function textColumn(ctx,text,x,y,W,lh,maxH,font,dropcap=false){
+  ctx.save();
+  ctx.font=font;ctx.fillStyle='#1a1208';ctx.textAlign='left';ctx.textBaseline='top';
+  const words=text.split(' ').filter(Boolean);
+  if(!words.length){ctx.restore();return y;}
+
+  if(dropcap&&words.length>0){
+    const letter=words[0][0]||'';
+    const rest=words[0].substring(1);
+
+    // Cap spans exactly 3 lines for better proportion
+    const capLines=3;
+    const capH=lh*capLines;
+    // fontSize so the actual cap height (≈72% of em) equals capH
+    const capFontSize=Math.round(capH/0.72);
+
+    // Draw drop cap — textBaseline='top' so it starts exactly at y
+    ctx.save();
+    ctx.font=`900 ${capFontSize}px "Playfair Display",serif`;
+    ctx.textBaseline='top';
+    ctx.fillStyle='#1a1208';
+    ctx.fillText(letter,x,y);
+    const capW=ctx.measureText(letter).width;
+    // thin vertical rule to the right of the cap as separator
+    ctx.fillStyle='rgba(139,105,20,.5)';
+    ctx.fillRect(x+capW+2,y+2,1,capH-4);
+    ctx.restore();
+
+    const bodyX=x+capW+7; // gap: capW + rule(1) + margin(4)
+    const bodyW=W-capW-7;
+
+    ctx.font=font;ctx.fillStyle='#1a1208';ctx.textAlign='left';ctx.textBaseline='top';
+    let line='',yy=y,lineN=0;
+    const allWords=[rest,...words.slice(1)].filter(Boolean);
+    for(const w of allWords){
+      const isNextToCAP=lineN<capLines;
+      const currX=isNextToCAP?bodyX:x;
+      const currW=isNextToCAP?bodyW:W;
+      const t=line?line+' '+w:w;
+      if(ctx.measureText(t).width>currW&&line){
+        ctx.fillText(line,currX,yy);
+        line=w;yy+=lh;lineN++;
+        if(yy+lh>maxH)break;
+      } else line=t;
+    }
+    if(line&&yy+lh<=maxH){
+      ctx.fillText(line,lineN<capLines?bodyX:x,yy);
+      yy+=lh;
+    }
+    ctx.restore();return yy;
+  }
+
+  // Normal column (no dropcap)
+  let line='',yy=y;
+  for(const w of words){
+    const t=line?line+' '+w:w;
+    if(ctx.measureText(t).width>W&&line){
+      ctx.fillText(line,x,yy);line=w;yy+=lh;if(yy+lh>maxH)break;
+    } else line=t;
+  }
+  if(line&&yy+lh<=maxH)ctx.fillText(line,x,yy);
+  ctx.restore();return yy+lh;
+}
+
+// Small section header like newspaper subheadings
+function sectionHead(ctx,text,x,y,w,color='#1a1208'){
+  ctx.save();
+  ctx.fillStyle=color;ctx.fillRect(x,y,w,1.5);
+  ctx.font='bold 8.5px "Courier Prime",monospace';ctx.fillStyle=color;ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText(text.toUpperCase(),x,y+4);
+  ctx.fillStyle=color;ctx.fillRect(x,y+15,w,1);
+  ctx.restore();return y+20;
+}
+
+// Byline
+function byline(ctx,x,y,date,pn){
+  ctx.font='italic 7.5px "Courier Prime",monospace';ctx.fillStyle='#8b6914';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('Oleh Redaksi '+(pn||'Snapcan')+'  ·  '+date,x,y);
+}
+
+function getO(){
+  return{
+    hl:(document.getElementById('inp-hl').value||'MOMEN TAK TERLUPAKAN').toUpperCase(),
+    sub:document.getElementById('inp-sub').value||'A City of Innovation, Nature, and Enduring Charm',
+    cap:document.getElementById('inp-cap').value||'Kenangan terindah yang abadi sepanjang masa',
+    ed:document.getElementById('inp-ed').value||'Edisi No. 1',
+    pn:document.getElementById('inp-papername').value||'Snapcan',
+    date:dateStr,dateF:dateFullStr,
+  };
+}
+
+// ══════════════════════════════════════════════════════════════
+// LAYOUTS — 10 Rich Newspaper Designs
+// ══════════════════════════════════════════════════════════════
+const LAYOUTS=[
+
+// ── 0: SNAP MANNER ───────────────────────────────────────────
+{name:'SNAP MANNER',W:700,H:1080,
+async render(ctx,I,o){
+  const{W,H}=this,{hl,sub,cap,ed,date,pn}=o;
+  ctx.fillStyle='#f5f0e8';ctx.fillRect(0,0,W,H);tex(ctx,W,H,.04);
+
+  // ticker
+  ctx.fillStyle='#1a1208';ctx.fillRect(0,0,W,26);
+  ctx.fillStyle='#8b1a1a';ctx.fillRect(0,26,W,4);
+  ctx.fillStyle='#f5f0e8';ctx.font='bold 9px "Courier Prime",monospace';ctx.textBaseline='middle';
+  ctx.textAlign='left';ctx.fillText('✦ Breaking News  ·  Laporan Eksklusif  ·  Edisi Terbatas',10,13);
+  ctx.textAlign='right';ctx.fillText(pn+' Photobooth  ·  Special Edition ✦',W-10,13);
+
+  // paper name HUGE
+  ctx.fillStyle='#1a1208';ctx.font='900 70px "Playfair Display",serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  ctx.fillText(hl,W/2,112);
+  ctx.font='italic 12px "Libre Baskerville",serif';ctx.fillStyle='#8b6914';ctx.fillText(sub,W/2,130);
+
+  tripleRule(ctx,0,138,W);
+
+  // meta row with 3 sections
+  rule(ctx,W/3,142,1,18,'#c8b99a');rule(ctx,W*2/3,142,1,18,'#c8b99a');
+  ctx.font='9px "Courier Prime",monospace';ctx.fillStyle='#1a1208';ctx.textBaseline='top';
+  ctx.textAlign='left';ctx.fillText(ed,10,143);
+  ctx.textAlign='center';ctx.fillText(date,W/2,143);
+  ctx.textAlign='right';ctx.fillText('Diterbitkan oleh '+pn,W-10,143);
+  ctx.font='7.5px "Courier Prime",monospace';ctx.fillStyle='#8b6914';
+  ctx.textAlign='left';ctx.fillText('No. 001',10,153);
+  ctx.textAlign='center';ctx.fillText('Harga: Gratis',W/2,153);
+  ctx.textAlign='right';ctx.fillText(pn.toLowerCase()+'.photo',W-10,153);
+  rule(ctx,0,163,W,1,'#c8b99a');
+
+  // HERO PHOTO
+  const mx=10,ph1=295,py1=170;
+  drawPhoto(ctx,I[0],mx,py1,W-mx*2,ph1);
+  ctx.strokeStyle='#1a1208';ctx.lineWidth=2;ctx.strokeRect(mx,py1,W-mx*2,ph1);
+  // caption bar overlaid on photo bottom
+  ctx.fillStyle='rgba(26,18,8,.82)';ctx.fillRect(mx,py1+ph1-28,W-mx*2,28);
+  ctx.font='italic 10.5px "Libre Baskerville",serif';ctx.fillStyle='#f5f0e8';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('↑ '+cap,W/2,py1+ph1-14);
+
+  // big headline below hero
+  ctx.fillStyle='#1a1208';ctx.font='bold 24px "Playfair Display",serif';ctx.textAlign='left';ctx.textBaseline='top';
+  const hEnd=wrapText(ctx,hl,mx,py1+ph1+10,W-mx*2,30,2);
+  ctx.font='italic 10px "Libre Baskerville",serif';ctx.fillStyle='#8b6914';
+  wrapText(ctx,sub,mx,hEnd,W-mx*2,14,1);
+  byline(ctx,mx,hEnd+16,date,pn);
+  rule(ctx,0,hEnd+30,W,1,'#1a1208');rule(ctx,0,hEnd+32,W,.5,'#8b6914');
+
+  // 2-col content
+  const rowY=hEnd+40,cw=(W-32)/2,c1=mx,c2=mx+cw+12,ch=H-rowY-56;
+  ctx.fillStyle='rgba(200,185,154,.5)';ctx.fillRect(c2-6,rowY,1,ch);
+
+  // LEFT COL
+  const lph=Math.floor(ch*0.46);
+  drawPhoto(ctx,I[1],c1,rowY,cw,lph);
+  ctx.strokeStyle='#1a1208';ctx.lineWidth=1;ctx.strokeRect(c1,rowY,cw,lph);
+  const sh1=sectionHead(ctx,'Laporan Utama',c1,rowY+lph+6,cw,'#1a1208');
+  byline(ctx,c1,sh1,date,pn);
+  textColumn(ctx,lorem(500),c1,sh1+10,cw,11.5,rowY+ch,'8px "Libre Baskerville",serif',true);
+
+  // RIGHT COL
+  const sHead=sectionHead(ctx,'Art Deco & Arsitektur Kota',c2,rowY,'#8b6914');
+  byline(ctx,c2,sHead,date,pn);
+  rule(ctx,c2,sHead+10,cw,1,'#1a1208');
+  const rph=(ch-sHead+rowY-14)/2-4;
+  drawPhoto(ctx,I[2],c2,sHead+14,cw,rph);ctx.strokeStyle='#1a1208';ctx.lineWidth=1;ctx.strokeRect(c2,sHead+14,cw,rph);
+  ctx.font='italic 8px "Libre Baskerville",serif';ctx.fillStyle='#8b6914';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('Foto: Dokumentasi Eksklusif '+pn,c2,sHead+14+rph+2);
+  drawPhoto(ctx,I[3],c2,sHead+22+rph,cw,rph);ctx.strokeStyle='#1a1208';ctx.strokeRect(c2,sHead+22+rph,cw,rph);
+  ctx.fillText('Foto: '+cap,c2,sHead+22+rph*2+2);
+  textColumn(ctx,lorem(200),c2,sHead+30+rph*2,cw,11.5,rowY+ch,'8px "Libre Baskerville",serif');
+
+  // FOOTER STRIP
+  rule(ctx,0,H-50,W,1,'#1a1208');rule(ctx,0,H-48,W,.5,'#8b6914');rule(ctx,0,H-46,W,1,'#1a1208');
+  ctx.fillStyle='#f5f0e8';ctx.font='italic 11px "Libre Baskerville",serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#8b6914';
+  ctx.fillText('"'+cap+'"',W/2,H-32);
+  ctx.font='8px "Courier Prime",monospace';ctx.fillStyle='#c8b99a';
+  ctx.fillText('✦  '+pn.toUpperCase()+' PHOTOBOOTH  ·  '+date+'  ·  Dibuat dengan ♥ dan Gratis  ✦',W/2,H-16);
+}},
+
+// ── 1: BROADSHEET KLASIK ─────────────────────────────────────
+{name:'BROADSHEET',W:640,H:1160,
+async render(ctx,I,o){
+  const{W,H}=this,{hl,sub,cap,ed,date,pn}=o;
+  ctx.fillStyle='#f5f0e8';ctx.fillRect(0,0,W,H);tex(ctx,W,H);
+
+  ctx.fillStyle='#1a1208';ctx.font='900 60px "Playfair Display",serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText(pn.toUpperCase(),W/2,66);
+  ctx.font='italic 11px "Libre Baskerville",serif';ctx.fillStyle='#c8b99a';ctx.fillText('— The Daily Photographic Chronicle —',W/2,82);
+  tripleRule(ctx,0,90,W);
+
+  // 3-part meta
+  rule(ctx,W/3,96,1,24,'#c8b99a');rule(ctx,W*2/3,96,1,24,'#c8b99a');
+  ctx.font='9px "Courier Prime",monospace';ctx.fillStyle='#1a1208';ctx.textBaseline='top';
+  ctx.textAlign='left';ctx.fillText(ed,10,97);ctx.fillText('Harga: Gratis',10,108);
+  ctx.textAlign='center';ctx.fillText(date,W/2,97);ctx.fillText(pn.toLowerCase()+'.photo',W/2,108);
+  ctx.textAlign='right';ctx.fillText('Edisi Koleksi',W-10,97);ctx.fillText('Diterbitkan '+pn,W-10,108);
+  rule(ctx,0,122,W,1,'#c8b99a');
+
+  // SPLASH HEADLINE
+  const hlY=sectionHead(ctx,'Laporan Utama — Edisi Koleksi',12,128,W-24,'#8b1a1a');
+  ctx.font='bold 22px "Playfair Display",serif';ctx.fillStyle='#1a1208';ctx.textAlign='left';ctx.textBaseline='top';
+  const hhEnd=wrapText(ctx,hl,12,hlY,W-24,28,2);
+  ctx.font='italic 11px "Libre Baskerville",serif';ctx.fillStyle='#8b6914';
+  wrapText(ctx,sub,12,hhEnd,W-24,15,1);
+  byline(ctx,12,hhEnd+17,date,pn);
+  rule(ctx,0,hhEnd+30,W,2,'#1a1208');
+
+  // 4 photos with rich captions and side text
+  const ph=164,gap=5,sy=hhEnd+38,mx=12;
+  const labels=['PEMBUKA','POTRET','MOMEN','PENUTUP'];
+  for(let i=0;i<4;i++){
+    const py=sy+i*(ph+gap);
+    // side label strip
+    ctx.fillStyle='#1a1208';ctx.fillRect(mx,py,22,ph);
+    ctx.save();ctx.translate(mx+11,py+ph/2);ctx.rotate(-Math.PI/2);
+    ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='#f5f0e8';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(labels[i],0,0);
+    ctx.restore();
+    // photo
+    drawPhoto(ctx,I[i],mx+22,py,W-mx*2-22,ph);
+    ctx.strokeStyle='#1a1208';ctx.lineWidth=1;ctx.strokeRect(mx+22,py,W-mx*2-22,ph);
+    // caption overlay
+    ctx.fillStyle='rgba(26,18,8,.75)';ctx.fillRect(mx+22,py+ph-22,W-mx*2-22,22);
+    ctx.font='italic 9px "Libre Baskerville",serif';ctx.fillStyle='#f5f0e8';ctx.textAlign='left';ctx.textBaseline='middle';
+    ctx.fillText((i===0?hl:cap)+' — Foto '+(i+1)+' dari 4 · '+date,mx+28,py+ph-11);
+    // mini body text between photos
+    if(i<3){
+      const ty=py+ph+1;
+      ctx.font='7.5px "Libre Baskerville",serif';ctx.fillStyle='#1a1208';ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.fillText(lorem(110).substring(0,80)+'...',mx,ty);
+    }
+  }
+  const botY=sy+4*(ph+gap)+2;
+  tripleRule(ctx,0,botY,W);
+  ctx.font='italic 11px "Libre Baskerville",serif';ctx.fillStyle='#8b6914';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('"'+cap+'"',W/2,botY+12);
+  ctx.font='8px "Courier Prime",monospace';ctx.fillStyle='#c8b99a';ctx.fillText('✦  '+pn.toUpperCase()+'  ✦  EDISI KOLEKSI  ✦  Dibuat dengan ♥ dan Gratis  ✦',W/2,botY+28);
+}},
+
+// ── 2: GAZETTE KUNO ──────────────────────────────────────────
+{name:'GAZETTE KUNO',W:660,H:1140,
+async render(ctx,I,o){
+  const{W,H}=this,{hl,sub,cap,ed,date,pn}=o;
+  const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#f0e8d0');bg.addColorStop(1,'#e0d4b0');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);tex(ctx,W,H,.07);
+
+  // multi-border
+  [[2,'#1a1208',3],[10,'#8b6914',1.5],[15,'#1a1208',1],[21,'#c8b99a',.5]].forEach(([p,c,lw])=>{ctx.strokeStyle=c;ctx.lineWidth=lw;ctx.strokeRect(p,p,W-p*2,H-p*2);});
+  // ornate corners
+  [[26,26],[W-26,26],[26,H-26],[W-26,H-26]].forEach(([cx,cy])=>{
+    [{r:10,c:'#8b1a1a'},{r:6,c:'#f5f0e8'},{r:3,c:'#8b6914'},{r:1.2,c:'#1a1208'}].forEach(({r,c})=>{ctx.fillStyle=c;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();});
+  });
+
+  ctx.font='900 italic 46px "Playfair Display",serif';ctx.fillStyle='#1a1208';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText('De '+pn+' Gazette',W/2,80);
+  ctx.font='10px "Courier Prime",monospace';ctx.fillStyle='#8b6914';ctx.fillText('— Surat Kabar Kenangan Bergambar Terkemuka —',W/2,98);
+  ornateRule(ctx,32,106,W-64);
+  ctx.font='9px "Courier Prime",monospace';ctx.fillStyle='#1a1208';
+  ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText(ed,34,116);
+  ctx.textAlign='center';ctx.fillText(date,W/2,116);
+  ctx.textAlign='right';ctx.fillText('Harga: Gratis',W-34,116);
+  ornateRule(ctx,32,130,W-64);
+
+  // big photo with double border
+  const mx=34,ph1=252,py1=150;
+  drawPhoto(ctx,I[0],mx,py1,W-mx*2,ph1,.25);
+  ctx.strokeStyle='#8b6914';ctx.lineWidth=2.5;ctx.strokeRect(mx-3,py1-3,W-mx*2+6,ph1+6);
+  ctx.strokeStyle='#1a1208';ctx.lineWidth=1;ctx.strokeRect(mx,py1,W-mx*2,ph1);
+  // caption overlay
+  ctx.fillStyle='rgba(26,18,8,.8)';ctx.fillRect(mx,py1+ph1-26,W-mx*2,26);
+  ctx.font='italic 10px "Libre Baskerville",serif';ctx.fillStyle='#f0e8d0';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('↑ '+cap,W/2,py1+ph1-13);
+
+  ornateRule(ctx,32,py1+ph1+10,W-64);
+
+  // headline — center aligned properly, auto-size font to fit width
+  const hlAvailW=W-mx*2;
+  // measure and auto-reduce font size so headline fits in 2 lines
+  let hlFontSize=26;
+  ctx.font=`bold italic ${hlFontSize}px "Playfair Display",serif`;
+  // reduce font until longest word fits or we hit minimum
+  const hlWords=hl.split(' ');
+  const longestWord=hlWords.reduce((a,b)=>a.length>b.length?a:b,'');
+  while(hlFontSize>14 && ctx.measureText(longestWord).width>hlAvailW*0.9){
+    hlFontSize-=1;
+    ctx.font=`bold italic ${hlFontSize}px "Playfair Display",serif`;
+  }
+  // also reduce if full hl won't fit in 2 lines
+  while(hlFontSize>14){
+    ctx.font=`bold italic ${hlFontSize}px "Playfair Display",serif`;
+    // simulate wrap — count lines
+    let line='',lines=0;
+    for(const w of hlWords){
+      const t=line?line+' '+w:w;
+      if(ctx.measureText(t).width>hlAvailW&&line){lines++;line=w;if(lines>=2)break;}
+      else line=t;
+    }
+    if(lines<2)break;
+    hlFontSize-=1;
+  }
+  ctx.font=`bold italic ${hlFontSize}px "Playfair Display",serif`;
+  ctx.fillStyle='#1a1208';ctx.textAlign='left';ctx.textBaseline='top';
+  const hhEnd=wrapText(ctx,hl,mx,py1+ph1+32,hlAvailW,hlFontSize+6,2);
+
+  ctx.font='italic 11px "Libre Baskerville",serif';ctx.fillStyle='#8b6914';ctx.textAlign='left';
+  wrapText(ctx,sub,mx,hhEnd,hlAvailW,16,2);
+  byline(ctx,mx,hhEnd+34,date,pn);
+
+  ornateRule(ctx,32,hhEnd+48,W-64);
+
+  // 3 small photos with text blocks
+  const rY=hhEnd+68,tw=(W-mx*2-16)/3;
+  const ph2=Math.min(140,Math.floor((H-rY-90)/2.2));
+  for(let i=0;i<3;i++){
+    const px=mx+i*(tw+8);
+    drawPhoto(ctx,I[i+1],px,rY,tw,ph2,.3);
+    ctx.strokeStyle='#8b6914';ctx.lineWidth=1.5;ctx.strokeRect(px-2,rY-2,tw+4,ph2+4);
+    ctx.strokeStyle='#1a1208';ctx.lineWidth=.5;ctx.strokeRect(px+2,rY+2,tw-4,ph2-4);
+    const rom=['I','II','III'];
+    const sh=sectionHead(ctx,rom[i]+' — Galeri Kenangan',px,rY+ph2+6,tw,'#8b6914');
+    ctx.font='italic 8px "Libre Baskerville",serif';ctx.fillStyle='#1a1208';ctx.textAlign='left';ctx.textBaseline='top';
+    // mini body per column
+    const colBodyY=sh;
+    ctx.fillText(lorem(60).substring(0,55)+'...',px,colBodyY);
+    ctx.fillText(lorem(60).substring(20,70)+'...',px,colBodyY+11);
+  }
+
+  // 2-col body text below
+  const cY=rY+ph2+52,cw=(W-mx*2-10)/2;
+  if(cY<H-60){
+    textColumn(ctx,lorem(400),mx,cY,cw,11.5,H-56,'8px "Libre Baskerville",serif',true);
+    textColumn(ctx,lorem(400),mx+cw+10,cY,cw,11.5,H-56,'8px "Libre Baskerville",serif');
+  }
+
+  ornateRule(ctx,32,H-48,W-64);
+  ctx.font='italic 12px "Libre Baskerville",serif';ctx.fillStyle='#8b6914';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('"'+cap+'"',W/2,H-30);
+  ornateRule(ctx,32,H-14,W-64);
+}},
+
+// ── 3: TABLOID BERITA ────────────────────────────────────────
+{name:'TABLOID',W:660,H:1100,
+async render(ctx,I,o){
+  const{W,H}=this,{hl,sub,cap,ed,date,pn}=o;
+  ctx.fillStyle='#f5f0e8';ctx.fillRect(0,0,W,H);tex(ctx,W,H);
+
+  ctx.fillStyle='#8b1a1a';ctx.fillRect(0,0,W,64);
+  ctx.fillStyle='#f5f0e8';ctx.font='900 50px "Playfair Display",serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(pn.toUpperCase(),W/2,32);
+  ctx.font='8px "Courier Prime",monospace';ctx.fillStyle='rgba(245,240,232,.6)';ctx.textBaseline='alphabetic';ctx.fillText('SURAT KABAR '+pn.toUpperCase()+'  ·  LAPORAN EKSKLUSIF',W/2,56);
+  rule(ctx,0,64,W,4,'#1a1208');rule(ctx,0,68,W,2,'#f5c070');rule(ctx,0,72,W,4,'#1a1208');
+
+  // meta strip
+  ctx.font='9px "Courier Prime",monospace';ctx.fillStyle='#1a1208';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('✦ '+date+' · '+ed,10,82);
+  ctx.textAlign='right';ctx.fillText(pn.toLowerCase()+'.photo  ✦',W-10,82);
+  ctx.textAlign='center';ctx.fillStyle='#8b6914';ctx.fillText('— Harga Gratis —',W/2,82);
+  rule(ctx,0,94,W,1,'#c8b99a');
+
+  // BREAKING banner
+  ctx.fillStyle='#1a1208';ctx.fillRect(0,98,W,26);
+  ctx.fillStyle='#f5c070';ctx.font='bold 11px "Courier Prime",monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('⚡  LAPORAN EKSKLUSIF — EDISI FOTOGRAFI '+pn.toUpperCase()+'  ⚡',W/2,111);
+
+  // big headline
+  ctx.font='bold italic 28px "Playfair Display",serif';ctx.fillStyle='#8b1a1a';ctx.textAlign='left';ctx.textBaseline='top';
+  let hY=wrapText(ctx,hl,10,132,W-20,34,2);
+  ctx.font='italic 11px "Libre Baskerville",serif';ctx.fillStyle='#1a1208';
+  wrapText(ctx,sub,10,hY,W-20,16,1);
+  byline(ctx,10,hY+18,date,pn);
+  rule(ctx,0,hY+32,W,3,'#8b1a1a');
+
+  const mx=10,ph1=272,py1=hY+42;
+  drawPhoto(ctx,I[0],mx,py1,W-mx*2,ph1);
+  ctx.strokeStyle='#8b1a1a';ctx.lineWidth=4;ctx.strokeRect(mx-3,py1-3,W-mx*2+6,ph1+6);
+  ctx.strokeStyle='#1a1208';ctx.lineWidth=1;ctx.strokeRect(mx,py1,W-mx*2,ph1);
+  // caption bar
+  ctx.fillStyle='rgba(139,26,26,.88)';ctx.fillRect(mx,py1+ph1-30,W-mx*2,30);
+  ctx.font='italic 11px "Libre Baskerville",serif';ctx.fillStyle='#f5f0e8';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('↑ '+cap,W/2,py1+ph1-15);
+
+  rule(ctx,0,py1+ph1+4,W,2,'#1a1208');rule(ctx,0,py1+ph1+8,W,1,'#8b1a1a');
+
+  // 3-col bottom: photo + text each
+  const rY=py1+ph1+18,cw=(W-mx*2-16)/3,ph2=Math.floor((H-rY-56)/2.4);
+  for(let i=0;i<3;i++){
+    const px=mx+i*(cw+8);
+    drawPhoto(ctx,I[i+1],px,rY,cw,ph2);
+    ctx.strokeStyle='#1a1208';ctx.lineWidth=1.5;ctx.strokeRect(px,rY,cw,ph2);
+    ctx.fillStyle='#8b1a1a';ctx.fillRect(px,rY+ph2,cw,18);
+    ctx.fillStyle='#f5f0e8';ctx.font='bold 8px "Courier Prime",monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('FOTO '+(i+2)+'  ·  '+date,px+cw/2,rY+ph2+9);
+    // mini text under each
+    const sh=sectionHead(ctx,'Laporan '+(i+2),px,rY+ph2+22,cw,'#1a1208');
+    ctx.font='7.5px "Libre Baskerville",serif';ctx.fillStyle='#1a1208';ctx.textAlign='left';ctx.textBaseline='top';
+    const mini=lorem(120).substring(i*40,i*40+90)+'...';
+    const tw2=ctx.measureText(mini).width;
+    if(tw2>0)body(ctx,mini,px,sh,cw,11,H-52,'7.5px "Libre Baskerville",serif');
+  }
+
+  ctx.fillStyle='#1a1208';ctx.fillRect(0,H-46,W,46);
+  rule(ctx,0,H-46,W,4,'#8b1a1a');
+  ctx.font='10px "Courier Prime",monospace';ctx.fillStyle='#c8b99a';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('✦  '+pn.toUpperCase()+'  ·  '+date+'  ·  Dibuat dengan ♥ dan Gratis  ✦',W/2,H-32);
+  ctx.font='italic 9px "Libre Baskerville",serif';ctx.fillStyle='#f5f0e8';ctx.fillText('"Gambar berbicara lebih dari seribu kata"  ·  '+pn.toLowerCase()+'.photo',W/2,H-16);
+}},
+
+// ── 4: WARTA LOKAL ───────────────────────────────────────────
+{name:'WARTA LOKAL',W:680,H:1120,
+async render(ctx,I,o){
+  const{W,H}=this,{hl,sub,cap,ed,date,pn}=o;
+  ctx.fillStyle='#f5f0e8';ctx.fillRect(0,0,W,H);tex(ctx,W,H);
+
+  // ── MASTHEAD
+  rule(ctx,0,0,W,7,'#1a1208');rule(ctx,0,9,W,2,'#8b6914');rule(ctx,0,13,W,7,'#1a1208');
+  ctx.font='900 56px "UnifrakturMaguntia",cursive';
+  ctx.fillStyle='#1a1208';ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  ctx.fillText('Warta '+pn,W/2,86);
+  ctx.font='italic 11px "Libre Baskerville",serif';ctx.fillStyle='#8b6914';
+  ctx.fillText('— Surat Kabar Bergambar Terkemuka —',W/2,104);
+  rule(ctx,0,112,W,7,'#1a1208');rule(ctx,0,121,W,2,'#8b6914');rule(ctx,0,125,W,1,'#1a1208');
+
+  // ── META ROW — fixed font, won't overflow
+  ctx.font='8.5px "Courier Prime",monospace';ctx.fillStyle='#1a1208';ctx.textBaseline='top';
+  rule(ctx,W/3,128,1,24,'#c8b99a');rule(ctx,W*2/3,128,1,24,'#c8b99a');
+  ctx.textAlign='left';
+  ctx.fillText(ed,12,129);
+  ctx.fillText('Harga: Gratis',12,141);
+  ctx.textAlign='center';
+  ctx.fillText(date,W/2,129);
+  ctx.fillText(pn.toLowerCase()+'.photo',W/2,141);
+  ctx.textAlign='right';
+  ctx.fillText('Edisi Koleksi',W-12,129);
+  ctx.fillText('Diterbitkan '+pn,W-12,141);
+  rule(ctx,0,154,W,1,'#c8b99a');
+
+  // ── COLUMN SETUP — fixed coordinates, nothing dynamic
+  const cY=162;
+  const c1w=Math.floor(W*.57), c1x=12;
+  const c2w=W-c1w-36, c2x=c1x+c1w+24;
+
+  // column divider
+  ctx.fillStyle='rgba(200,185,154,.6)';
+  ctx.fillRect(c2x-12,cY,1,H-cY-56);
+
+  // ── LEFT COLUMN ──────────────────────────────────────────────
+  // Photo 1 — fixed height
+  const ph1=220;
+  drawPhoto(ctx,I[0],c1x,cY,c1w,ph1);
+  ctx.strokeStyle='#1a1208';ctx.lineWidth=1.5;
+  ctx.strokeRect(c1x,cY,c1w,ph1);
+  // caption bar over photo bottom
+  ctx.fillStyle='rgba(26,18,8,.80)';
+  ctx.fillRect(c1x,cY+ph1-22,c1w,22);
+  ctx.font='italic 8.5px "Libre Baskerville",serif';
+  ctx.fillStyle='#f5f0e8';ctx.textAlign='left';ctx.textBaseline='middle';
+  // truncate caption to fit
+  const capShort=cap.length>50?cap.substring(0,48)+'…':cap;
+  ctx.fillText('↑ '+capShort,c1x+5,cY+ph1-11);
+
+  // Fixed-position headline block — starts at known y
+  const hl1Y=cY+ph1+10;
+  // horizontal rule above headline
+  rule(ctx,c1x,hl1Y,c1w,1.5,'#1a1208');
+
+  // SECTION LABEL
+  ctx.font='bold 8px "Courier Prime",monospace';
+  ctx.fillStyle='#8b1a1a';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('LAPORAN UTAMA',c1x,hl1Y+5);
+  rule(ctx,c1x,hl1Y+16,c1w,.5,'#c8b99a');
+
+  // Headline — max 2 lines, fixed line height
+  ctx.font='bold 17px "Playfair Display",serif';
+  ctx.fillStyle='#1a1208';ctx.textBaseline='top';
+  const hlWords=hl.split(' ');let hlLine='',hlY=hl1Y+20,hlLines=0;
+  for(const w of hlWords){
+    const t=hlLine?hlLine+' '+w:w;
+    if(ctx.measureText(t).width>c1w&&hlLine){
+      ctx.fillText(hlLine,c1x,hlY);hlLine=w;hlY+=22;hlLines++;
+      if(hlLines>=2){hlLine='';break;}
+    } else hlLine=t;
+  }
+  if(hlLine)ctx.fillText(hlLine,c1x,hlY);
+  const afterHl=hlY+26; // fixed gap after headline
+
+  // Sub-judul — max 1 line, clipped
+  ctx.font='italic 10px "Libre Baskerville",serif';
+  ctx.fillStyle='#8b6914';ctx.textBaseline='top';
+  const subClip=sub.length>70?sub.substring(0,68)+'…':sub;
+  ctx.fillText(subClip,c1x,afterHl);
+
+  // Byline
+  ctx.font='italic 7.5px "Courier Prime",monospace';
+  ctx.fillStyle='#8b6914';ctx.textBaseline='top';
+  ctx.fillText('Oleh Redaksi '+pn+' · '+date,c1x,afterHl+14);
+
+  rule(ctx,c1x,afterHl+25,c1w,.5,'#c8b99a');
+
+  // Body text — fills remaining left column space cleanly
+  const bodyStartY=afterHl+30;
+  const bodyEndY=H-58;
+  textColumn(ctx,lorem(700),c1x,bodyStartY,c1w,12,bodyEndY,
+    '8.5px "Libre Baskerville",serif',true);
+
+  // ── RIGHT COLUMN — 3 stacked photos, equal height, clean captions
+  const totalRightH=H-cY-56;
+  const photoGap=6;
+  const capH=32; // reserved height for caption per photo
+  const ph2=Math.floor((totalRightH-photoGap*2-capH*3)/3);
+
+  for(let i=0;i<3;i++){
+    const slotY=cY+i*(ph2+capH+photoGap);
+
+    // Photo
+    drawPhoto(ctx,I[i+1],c2x,slotY,c2w,ph2,.26);
+    ctx.strokeStyle='#1a1208';ctx.lineWidth=1;
+    ctx.strokeRect(c2x,slotY,c2w,ph2);
+
+    // Caption box below photo — fixed height, clean
+    ctx.fillStyle='#f0ebe0';
+    ctx.fillRect(c2x,slotY+ph2,c2w,capH);
+    rule(ctx,c2x,slotY+ph2,c2w,1,'#1a1208');
+    rule(ctx,c2x,slotY+ph2+capH-1,c2w,1,'rgba(200,185,154,.5)');
+
+    // Caption label
+    ctx.font='bold 7.5px "Courier Prime",monospace';
+    ctx.fillStyle='#8b6914';ctx.textAlign='left';ctx.textBaseline='top';
+    ctx.fillText('FOTO '+(i+2)+' — DOKUMENTASI',c2x+4,slotY+ph2+4);
+
+    // Caption text — 1 line, truncated
+    ctx.font='italic 8px "Libre Baskerville",serif';
+    ctx.fillStyle='#1a1208';
+    const snippet=lorem(55).substring(i*18,i*18+48)+'...';
+    ctx.fillText(snippet,c2x+4,slotY+ph2+16);
+  }
+
+  // ── FOOTER
+  rule(ctx,0,H-48,W,7,'#1a1208');
+  rule(ctx,0,H-39,W,2,'#8b6914');
+  ctx.font='italic 10.5px "Libre Baskerville",serif';
+  ctx.fillStyle='#8b6914';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('"'+capShort+'"  ·  '+pn+' · Dibuat dengan ♥ dan Gratis',W/2,H-26);
+  rule(ctx,0,H-12,W,3,'#1a1208');
+}},
+
+// ── 5: DAILY PROPHET — Harry Potter magical newspaper ────────
+{name:'DAILY PROPHET',W:680,H:1120,
+async render(ctx,I,o){
+  const{W,H}=this;
+  // aged parchment bg
+  const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#e8dfc0');bg.addColorStop(.5,'#ddd4a8');bg.addColorStop(1,'#ccc090');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  // heavy grain
+  ctx.save();for(let i=0;i<W*H*.006;i++){const g=130+Math.random()*80|0;ctx.globalAlpha=Math.random()*.1;ctx.fillStyle=`rgb(${g},${g-10},${g-30})`;ctx.fillRect(Math.random()*W,Math.random()*H,Math.random()*2+.5,Math.random()*2+.5);}ctx.globalAlpha=1;ctx.restore();
+  addVignette(ctx,W,H,.35);
+
+  // ── TOP BAR
+  ctx.fillStyle='#2a1f0e';ctx.fillRect(0,0,W,18);
+  ctx.font='7px "Courier Prime",monospace';ctx.fillStyle='rgba(220,200,150,.8)';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('bewitch  bewilder  beguilinate  per',8,9);
+  ctx.textAlign='right';ctx.fillText('ellegisate enchant detivate beguile',W-8,9);
+  ctx.textAlign='center';ctx.fillText('★',W/2,9);
+
+  // ── MASTHEAD
+  const MX=10;
+  // left phoenix emblem area
+  ctx.fillStyle='rgba(42,31,14,.15)';ctx.fillRect(MX,20,90,68);
+  ctx.strokeStyle='#2a1f0e';ctx.lineWidth=1.5;ctx.strokeRect(MX,20,90,68);
+  // draw simplified phoenix/crest
+  ctx.fillStyle='#2a1f0e';ctx.font='bold 8px "Courier Prime",monospace';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('bewitch',MX+45,22);ctx.fillText('legalis',MX+45,30);
+  // crest circle
+  ctx.beginPath();ctx.arc(MX+45,56,16,0,Math.PI*2);ctx.strokeStyle='#2a1f0e';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.beginPath();ctx.arc(MX+45,56,10,0,Math.PI*2);ctx.stroke();
+  ctx.font='10px serif';ctx.fillText('⚜',MX+45,48);
+  ctx.font='6px "Courier Prime",monospace';ctx.fillText('plakis placis samens per',MX+45,74);
+
+  // "The" script above DAILY PROPHET
+  ctx.font='italic 18px "Playfair Display",serif';ctx.fillStyle='#2a1f0e';ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  ctx.fillText('The',W/2,42);
+
+  // DAILY PROPHET - huge condensed
+  ctx.font='900 58px "Playfair Display",serif';ctx.fillStyle='#0d0a04';ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  ctx.strokeStyle='rgba(0,0,0,.2)';ctx.lineWidth=3;ctx.strokeText('DAILY PROPHET',W/2,88);
+  ctx.fillText('DAILY PROPHET',W/2,88);
+
+  // right emblem area
+  ctx.fillStyle='rgba(42,31,14,.15)';ctx.fillRect(W-MX-90,20,90,68);
+  ctx.strokeStyle='#2a1f0e';ctx.lineWidth=1.5;ctx.strokeRect(W-MX-90,20,90,68);
+  ctx.font='bold 8px "Courier Prime",monospace';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle='#2a1f0e';
+  ctx.fillText('spellbind',W-MX-45,22);ctx.fillText('enchant divinale',W-MX-45,30);
+  ctx.font='bold 9px serif';ctx.fillText('№ 7',W-MX-45,40);
+  ctx.beginPath();ctx.arc(W-MX-45,56,16,0,Math.PI*2);ctx.strokeStyle='#2a1f0e';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.beginPath();ctx.arc(W-MX-45,56,10,0,Math.PI*2);ctx.stroke();
+  ctx.font='10px serif';ctx.fillText('⚜',W-MX-45,48);
+  ctx.font='6px "Courier Prime",monospace';ctx.fillText('ellegisate enchant samus',W-MX-45,74);
+
+  // tagline
+  ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='#2a1f0e';ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  ctx.fillText('★  THE WIZARD WORLD\'S BEGUILING BROADSHEET OF CHOICE  ★',W/2,103);
+  // decorative lines
+  ctx.fillStyle='#2a1f0e';ctx.fillRect(MX,106,W-MX*2,1);ctx.fillRect(MX,108,W-MX*2,.5);
+  ctx.font='6.5px "Courier Prime",monospace';ctx.fillStyle='rgba(42,31,14,.6)';
+  ctx.textAlign='left';ctx.fillText('★ platys placis samens per ★ ' ,MX,116);
+  ctx.textAlign='right';ctx.fillText('★ ellegisate enchant enchant ★',W-MX,116);
+  ctx.fillStyle='#2a1f0e';ctx.fillRect(MX,119,W-MX*2,.5);ctx.fillRect(MX,121,W-MX*2,1.5);
+
+  // ── AD STRIPS ROW (Gringotts + Witch Watchers)
+  const adY=126;
+  // Gringotts box
+  ctx.fillStyle='rgba(42,31,14,.06)';ctx.fillRect(MX,adY,170,52);
+  ctx.strokeStyle='#2a1f0e';ctx.lineWidth=1;ctx.strokeRect(MX,adY,170,52);
+  ctx.font='bold 9px "Courier Prime",monospace';ctx.fillStyle='#2a1f0e';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('GRINGOTTS',MX+85,adY+4);
+  ctx.font='7px "Courier Prime",monospace';ctx.fillText('JUNIOR WIZARD SAVINGS ACCOUNTS',MX+85,adY+15);
+  ctx.font='8px serif';ctx.fillText('⊕',MX+85,adY+27);
+  ctx.font='6.5px "Courier Prime",monospace';ctx.fillStyle='rgba(42,31,14,.7)';
+  ctx.fillText('SUPPORT THOSE IN NEED OF',MX+85,adY+39);ctx.fillText('THE BESTS WIZARDING BANK',MX+85,adY+47);
+  // Witch Watchers box
+  ctx.fillStyle='rgba(42,31,14,.06)';ctx.fillRect(MX+176,adY,W-MX*2-176,52);
+  ctx.strokeStyle='#2a1f0e';ctx.lineWidth=1;ctx.strokeRect(MX+176,adY,W-MX*2-176,52);
+  ctx.font='bold 9px "Courier Prime",monospace';ctx.fillStyle='#2a1f0e';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('EAT',MX+184,adY+4);
+  ctx.font='bold 7px "Courier Prime",monospace';ctx.fillText('AS MUCH',MX+202,adY+4);ctx.fillText('AS YOU',MX+202,adY+12);
+  ctx.font='bold 14px "Playfair Display",serif';ctx.fillText('WANT',MX+184,adY+30);
+  ctx.font='italic 8px "Playfair Display",serif';ctx.fillText('with the new range of potions',MX+230,adY+8);
+  ctx.font='italic 14px "Playfair Display",serif';ctx.fillStyle='#2a1f0e';ctx.textAlign='right';ctx.textBaseline='top';
+  ctx.fillText('from Witch',W-MX-4,adY+8);
+  ctx.font='italic bold 18px "Playfair Display",serif';ctx.fillText('Watchers',W-MX-4,adY+24);
+  ctx.fillRect(MX+176,adY,W-MX*2-176,52);ctx.strokeRect(MX+176,adY,W-MX*2-176,52);ctx.strokeStyle='#2a1f0e';ctx.lineWidth=1;ctx.strokeRect(MX+176,adY,W-MX*2-176,52);
+
+  // ── MAIN RULE
+  ctx.fillStyle='#2a1f0e';ctx.fillRect(MX,adY+56,W-MX*2,2);ctx.fillRect(MX,adY+60,W-MX*2,1);
+
+  // ── 3-COL LAYOUT (EXCLUSIVE | BIG HEADLINE | right col)
+  const bodyY=adY+68;
+  const c1w=130,c3w=160,c2w=W-MX*2-c1w-c3w-20;
+  const c1x=MX,c2x=MX+c1w+8,c3x=MX+c1w+8+c2w+8;
+  // col rules
+  ctx.fillStyle='rgba(42,31,14,.3)';ctx.fillRect(c2x-5,bodyY,1,W-bodyY-50);
+  ctx.fillRect(c3x-5,bodyY,1,W-bodyY-50);
+
+  // COL 1: EXCLUSIVE box
+  ctx.strokeStyle='#2a1f0e';ctx.lineWidth=1.5;ctx.strokeRect(c1x,bodyY,c1w,26);
+  ctx.font='bold italic 13px "Playfair Display",serif';ctx.fillStyle='#2a1f0e';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('EXCLUSIVE',c1x+c1w/2,bodyY+13);
+  ctx.font='7px "Libre Baskerville",serif';ctx.fillStyle='#2a1f0e';ctx.textAlign='left';ctx.textBaseline='top';
+  const intro='Harry Potter — the only known survivor of the Avada Kedavra curse — has been a rallying point for opponents in the reign of You-Know-Who for almost sixteen years now. Word has now reached The Prophet however that Potter has been missing since leaving the protection of his home on July 31st.';
+  body(ctx,intro,c1x,bodyY+30,c1w,10.5,bodyY+210,'7px "Libre Baskerville",serif');
+  ctx.font='bold 7px "Courier Prime",monospace';ctx.fillStyle='#2a1f0e';ctx.fillText('(MORE PAGES 2,3,8)',c1x,bodyY+215);
+  ctx.font='bold 7px "Courier Prime",monospace';ctx.fillText('HARRY POTTER\'S TRAGIC PAST AS',c1x,bodyY+226);
+  ctx.fillText('TOLD TO RITA SKEETA — PAGES 4,9,13',c1x,bodyY+236);
+
+  // COL 2: BIG PHOTO + MASSIVE HEADLINE
+  // Photo (photo 1)
+  const bigPhH=200;
+  drawPhoto(ctx,I[0],c2x,bodyY,c2w,bigPhH,.1);
+  ctx.strokeStyle='#2a1f0e';ctx.lineWidth=2;ctx.strokeRect(c2x,bodyY,c2w,bigPhH);
+
+  // massive 3-line headline
+  const hlwords=o.hl.split(' ');
+  const chunkSize=Math.ceil(hlwords.length/3);
+  const hlines=[hlwords.slice(0,chunkSize).join(' '),hlwords.slice(chunkSize,chunkSize*2).join(' '),hlwords.slice(chunkSize*2).join(' ')].filter(Boolean);
+  let hlY=bodyY+bigPhH+4;
+  hlines.forEach((ln,li)=>{
+    const fs=Math.min(48,Math.floor(c2w*0.95/Math.max(ln.length*0.55,1)));
+    ctx.font=`900 ${Math.max(fs,28)}px "Playfair Display",serif`;
+    ctx.fillStyle='#0d0a04';ctx.textAlign='left';ctx.textBaseline='alphabetic';
+    ctx.strokeStyle='rgba(0,0,0,.15)';ctx.lineWidth=2;ctx.strokeText(ln,c2x,hlY+Math.max(fs,28));
+    ctx.fillText(ln,c2x,hlY+Math.max(fs,28));
+    hlY+=Math.max(fs,28)+2;
+  });
+
+  ctx.fillStyle='#2a1f0e';ctx.fillRect(c2x,hlY+4,c2w,1.5);
+
+  // Sub-article below headline: SCRIMGEOUR STYLE
+  const subHeadY=hlY+10;
+  ctx.font='bold 15px "Playfair Display",serif';ctx.fillStyle='#0d0a04';ctx.textAlign='left';ctx.textBaseline='top';
+  const subEnd=wrapText(ctx,o.sub,c2x,subHeadY,c2w,20,subHeadY+60);
+  ctx.fillStyle='#2a1f0e';ctx.fillRect(c2x,subEnd,c2w,.5);
+  // body in 2 small cols
+  const scol=(c2w-6)/2;
+  body(ctx,lorem(400),c2x,subEnd+6,scol,11,bodyY+530,'7px "Libre Baskerville",serif');
+  body(ctx,lorem(400),c2x+scol+6,subEnd+6,scol,11,bodyY+530,'7px "Libre Baskerville",serif');
+
+  // COL 3: Photo 2 + story
+  drawPhoto(ctx,I[1],c3x,bodyY,c3w,160,.1);
+  ctx.strokeStyle='#2a1f0e';ctx.lineWidth=1;ctx.strokeRect(c3x,bodyY,c3w,160);
+  ctx.font='7px "Libre Baskerville",serif';ctx.fillStyle='rgba(42,31,14,.7)';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('↑ '+o.cap,c3x,bodyY+162);
+  ctx.font='bold 8px "Playfair Display",serif';ctx.fillStyle='#0d0a04';
+  const r3hEnd=wrapText(ctx,o.sub.toUpperCase(),c3x,bodyY+173,c3w,11,bodyY+210);
+  ctx.fillStyle='#2a1f0e';ctx.fillRect(c3x,r3hEnd,c3w,.5);
+  body(ctx,lorem(350),c3x,r3hEnd+4,c3w,10.5,bodyY+530,'7px "Libre Baskerville",serif');
+
+  // ── BOTTOM PHOTO ROW
+  const rowY=bodyY+536;
+  ctx.fillStyle='#2a1f0e';ctx.fillRect(MX,rowY-4,W-MX*2,1.5);
+  const bph=Math.min(150,H-rowY-55),bpw=(W-MX*2-10)/2;
+  drawPhoto(ctx,I[2],MX,rowY,bpw,bph,.1);
+  ctx.strokeStyle='#2a1f0e';ctx.lineWidth=1.5;ctx.strokeRect(MX,rowY,bpw,bph);
+  drawPhoto(ctx,I[3],MX+bpw+10,rowY,bpw,bph,.1);
+  ctx.strokeStyle='#2a1f0e';ctx.strokeRect(MX+bpw+10,rowY,bpw,bph);
+
+  // ── BOTTOM TICKER
+  ctx.fillStyle='#2a1f0e';ctx.fillRect(MX,H-42,W-MX*2,1.5);
+  ctx.font='bold 7.5px "Courier Prime",monospace';ctx.fillStyle='#2a1f0e';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('SKIPPING SCHOOL: '+o.cap.toUpperCase()+'. WHERE COULD HE BE HIDING?',MX,H-36);
+  ctx.fillStyle='#2a1f0e';ctx.fillRect(MX,H-24,W-MX*2,1);
+  ctx.font='bold 7.5px "Courier Prime",monospace';ctx.textAlign='right';
+  ctx.fillText('THE BOY WHO VANISHES',W-MX,H-18);
+  ctx.textAlign='left';ctx.fillText(o.date,MX,H-18);
+}},
+
+// ── 6: IN MEMORIAM ───────────────────────────────────────────
+{name:'IN MEMORIAM',W:640,H:1120,
+async render(ctx,I,o){
+  const{W,H}=this,{hl,sub,cap,date,pn}=o;
+  ctx.fillStyle='#eee8d8';ctx.fillRect(0,0,W,H);tex(ctx,W,H,.06);
+  addVignette(ctx,W,H,.22);
+  ctx.strokeStyle='#1a1208';ctx.lineWidth=14;ctx.strokeRect(7,7,W-14,H-14);
+  ctx.strokeStyle='#1a1208';ctx.lineWidth=2;ctx.strokeRect(21,21,W-42,H-42);
+  ctx.strokeStyle='#8b6914';ctx.lineWidth=1;ctx.strokeRect(27,27,W-54,H-54);
+  ctx.strokeStyle='rgba(200,185,154,.4)';ctx.lineWidth=.5;ctx.strokeRect(31,31,W-62,H-62);
+
+  ctx.fillStyle='#1a1208';ctx.fillRect(21,21,W-42,54);
+  ctx.fillStyle='#ede8d8';ctx.font='900 22px "Playfair Display",serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('IN  MEMORIAM  ·  '+pn.toUpperCase(),W/2,44);
+  ctx.font='9px "Courier Prime",monospace';ctx.fillStyle='#c8b99a';ctx.fillText(date+'  ·  Edisi Abadi',W/2,64);
+
+  ornateRule(ctx,36,82,W-72);
+
+  const mx=46,ph1=290,py1=100;
+  drawPhoto(ctx,I[0],mx,py1,W-mx*2,ph1,.28);
+  ctx.strokeStyle='#1a1208';ctx.lineWidth=2;ctx.strokeRect(mx,py1,W-mx*2,ph1);
+  ctx.strokeStyle='#8b6914';ctx.lineWidth=.5;ctx.strokeRect(mx+3,py1+3,W-mx*2-6,ph1-6);
+  ctx.fillStyle='rgba(26,18,8,.78)';ctx.fillRect(mx,py1+ph1-28,W-mx*2,28);
+  ctx.font='italic 10px "Libre Baskerville",serif';ctx.fillStyle='#ede8d8';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('↑ '+cap,W/2,py1+ph1-14);
+
+  ornateRule(ctx,36,py1+ph1+12,W-72);
+
+  // headline — left aligned, auto-size font to prevent overflow/cutoff
+  const hlAvailW=W-mx*2;
+  let hlFontSize=26;
+  ctx.font=`900 italic ${hlFontSize}px "Playfair Display",serif`;
+  // shrink until longest word fits
+  const hlWords2=hl.split(' ');
+  const longestWord2=hlWords2.reduce((a,b)=>a.length>b.length?a:b,'');
+  while(hlFontSize>14&&ctx.measureText(longestWord2).width>hlAvailW*.92){
+    hlFontSize--;ctx.font=`900 italic ${hlFontSize}px "Playfair Display",serif`;
+  }
+  // shrink until fits in 2 lines
+  while(hlFontSize>14){
+    ctx.font=`900 italic ${hlFontSize}px "Playfair Display",serif`;
+    let line2='',lines2=0;
+    for(const w of hlWords2){
+      const t=line2?line2+' '+w:w;
+      if(ctx.measureText(t).width>hlAvailW&&line2){lines2++;line2=w;if(lines2>=2)break;}
+      else line2=t;
+    }
+    if(lines2<2)break;
+    hlFontSize--;
+  }
+  ctx.font=`900 italic ${hlFontSize}px "Playfair Display",serif`;
+  ctx.fillStyle='#1a1208';ctx.textAlign='left';ctx.textBaseline='top';
+  const hhEnd=wrapText(ctx,hl,mx,py1+ph1+36,hlAvailW,hlFontSize+6,2);
+
+  ctx.font='italic 11px "Libre Baskerville",serif';ctx.fillStyle='#8b6914';ctx.textAlign='left';
+  wrapText(ctx,sub,mx,hhEnd,hlAvailW,16,2);
+  byline(ctx,mx,hhEnd+34,date,pn);
+
+  ornateRule(ctx,36,hhEnd+50,W-72);
+
+  const rY=hhEnd+74,ph2=Math.min(138,Math.floor((H-rY-100)/2)),tw=(W-92-16)/3;
+  for(let i=0;i<3;i++){
+    const px=46+i*(tw+8);
+    drawPhoto(ctx,I[i+1],px,rY,tw,ph2,.32);
+    ctx.strokeStyle='#1a1208';ctx.lineWidth=1;ctx.strokeRect(px,rY,tw,ph2);
+    const rom=['I','II','III'];
+    const sh=sectionHead(ctx,rom[i]+' — Kenangan',px,rY+ph2+4,tw,'#8b6914');
+    ctx.font='7.5px "Libre Baskerville",serif';ctx.fillStyle='#3a2e1e';ctx.textAlign='left';ctx.textBaseline='top';
+    ctx.fillText(lorem(55).substring(i*18,i*18+50)+'...',px,sh);
+  }
+
+  // epitaph body
+  const bodyY=rY+ph2+56;
+  if(bodyY<H-60){
+    const cw=(W-92-8)/2;
+    textColumn(ctx,lorem(400),46,bodyY,cw,11.5,H-58,'italic 8.5px "Libre Baskerville",serif');
+    textColumn(ctx,lorem(400),46+cw+8,bodyY,cw,11.5,H-58,'italic 8.5px "Libre Baskerville",serif');
+  }
+
+  ornateRule(ctx,36,H-58,W-72);
+  ctx.font='italic 13px "Libre Baskerville",serif';ctx.fillStyle='#8b6914';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('"'+cap+'"',W/2,H-38);
+  ornateRule(ctx,36,H-22,W-72);
+}},
+
+// ── 7: EDITORIAL ─────────────────────────────────────────────
+{name:'EDITORIAL',W:700,H:1140,
+async render(ctx,I,o){
+  const{W,H}=this,{hl,sub,cap,ed,date,pn}=o;
+  ctx.fillStyle='#f5f0e8';ctx.fillRect(0,0,W,H);tex(ctx,W,H);
+
+  rule(ctx,0,0,W,5,'#1a1208');rule(ctx,0,7,W,1.5,'#8b6914');rule(ctx,0,10,W,5,'#1a1208');
+  ctx.font='900 50px "Playfair Display",serif';ctx.fillStyle='#1a1208';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText('THE '+pn.toUpperCase(),W/2,72);
+  ctx.font='italic 12px "Libre Baskerville",serif';ctx.fillStyle='#8b6914';ctx.fillText('— '+sub+' —',W/2,90);
+  rule(ctx,0,98,W,5,'#1a1208');rule(ctx,0,105,W,1.5,'#8b6914');rule(ctx,0,108,W,5,'#1a1208');
+
+  // meta strip full
+  ctx.font='9px "Courier Prime",monospace';ctx.fillStyle='#1a1208';ctx.textBaseline='top';
+  ctx.textAlign='left';ctx.fillText(date,12,120);
+  ctx.textAlign='center';ctx.fillText(pn.toUpperCase()+'  ·  '+pn.toLowerCase().replace(/ /g,'')+'  ',W/2,120);
+  ctx.textAlign='right';ctx.fillText(ed+'  ·  Harga: Gratis',W-12,120);
+  rule(ctx,0,132,W,1,'#c8b99a');
+
+  // 3 columns
+  const cw=(W-36)/3,c1=12,c2=12+cw+6,c3=12+cw*2+12,cY=140;
+  ctx.fillStyle='rgba(200,185,154,.6)';ctx.fillRect(c2-4,cY,1,H-cY-52);ctx.fillRect(c3-4,cY,1,H-cY-52);
+
+  // COL 1
+  drawPhoto(ctx,I[0],c1,cY,cw,210);ctx.strokeStyle='#1a1208';ctx.lineWidth=1;ctx.strokeRect(c1,cY,cw,210);
+  ctx.fillStyle='rgba(26,18,8,.75)';ctx.fillRect(c1,cY+186,cw,24);
+  ctx.font='italic 8.5px "Libre Baskerville",serif';ctx.fillStyle='#f5f0e8';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('↑ '+cap,c1+4,cY+198);
+  const sh1=sectionHead(ctx,'Laporan Utama',c1,cY+216,cw,'#1a1208');
+  ctx.font='bold 13px "Playfair Display",serif';ctx.fillStyle='#1a1208';ctx.textBaseline='top';
+  const hhEnd1=wrapText(ctx,hl,c1,sh1,cw,18,sh1+60);
+  byline(ctx,c1,hhEnd1+2,date,pn);
+  textColumn(ctx,lorem(600),c1,hhEnd1+14,cw,11.5,H-52,'8px "Libre Baskerville",serif',true);
+
+  // COL 2: tall photo dominates
+  drawPhoto(ctx,I[1],c2,cY,cw,450);ctx.strokeStyle='#1a1208';ctx.lineWidth=1;ctx.strokeRect(c2,cY,cw,450);
+  ctx.fillStyle='rgba(26,18,8,.75)';ctx.fillRect(c2,cY+426,cw,24);
+  ctx.font='italic 8.5px "Libre Baskerville",serif';ctx.fillStyle='#f5f0e8';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('↑ Foto utama edisi',c2+4,cY+438);
+  const sh2=sectionHead(ctx,'Galeri Utama',c2,cY+456,cw,'#8b6914');
+  byline(ctx,c2,sh2,date,pn);
+  textColumn(ctx,lorem(300),c2,sh2+12,cw,11.5,H-52,'8px "Libre Baskerville",serif');
+
+  // COL 3: 2 photos + text
+  drawPhoto(ctx,I[2],c3,cY,cw,215);ctx.strokeStyle='#1a1208';ctx.lineWidth=1;ctx.strokeRect(c3,cY,cw,215);
+  ctx.fillStyle='rgba(26,18,8,.75)';ctx.fillRect(c3,cY+191,cw,24);
+  ctx.font='italic 8.5px "Libre Baskerville",serif';ctx.fillStyle='#f5f0e8';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('↑ '+cap,c3+4,cY+203);
+  drawPhoto(ctx,I[3],c3,cY+222,cw,215);ctx.strokeStyle='#1a1208';ctx.strokeRect(c3,cY+222,cw,215);
+  ctx.fillStyle='rgba(26,18,8,.75)';ctx.fillRect(c3,cY+413,cw,24);
+  ctx.fillText('↑ '+cap+' #2',c3+4,cY+425);
+  const sh3=sectionHead(ctx,'Momen Pilihan',c3,cY+444,cw,'#1a1208');
+  byline(ctx,c3,sh3,date,pn);
+  textColumn(ctx,lorem(300),c3,sh3+12,cw,11.5,H-52,'8px "Libre Baskerville",serif');
+
+  tripleRule(ctx,0,H-46,W);
+  ctx.font='italic 11px "Libre Baskerville",serif';ctx.fillStyle='#8b6914';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('"'+cap+'"  ·  '+pn+'  ·  Dibuat dengan ♥ dan Gratis',W/2,H-28);
+  rule(ctx,0,H-12,W,5,'#1a1208');
+}},
+
+// ── 8: MANGA PANEL — comic speed lines dramatic ─────────────
+{name:'MANGA PANEL',W:640,H:980,
+async render(ctx,I,o){
+  const{W,H}=this;
+
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+
+  const PAD=6, BORDER=5, GAP=7;
+
+  // ── helper: draw speed lines clipped to a panel rect
+  function speedLines(cx,cy,px,py,pw,ph,count){
+    ctx.save();
+    ctx.beginPath();ctx.rect(px,py,pw,ph);ctx.clip();
+    const maxR=Math.sqrt(pw*pw+ph*ph)*1.4;
+    const step=(Math.PI*2)/count;
+    for(let i=0;i<count;i++){
+      const angle=i*step+(Math.random()*.06-.03);
+      const spread=.005+Math.random()*.022;
+      const inner=maxR*.18+Math.random()*maxR*.12;
+      ctx.beginPath();
+      ctx.moveTo(cx+Math.cos(angle-spread)*inner, cy+Math.sin(angle-spread)*inner);
+      ctx.lineTo(cx+Math.cos(angle)*maxR,          cy+Math.sin(angle)*maxR);
+      ctx.lineTo(cx+Math.cos(angle+spread)*inner,  cy+Math.sin(angle+spread)*inner);
+      ctx.closePath();
+      ctx.fillStyle=`rgba(0,0,0,${.55+Math.random()*.3})`;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ── helper: draw a full panel (photo → speed lines overlay → border)
+  function panel(img, px,py,pw,ph, burstX,burstY, lineCount, borderW){
+    // 1. Photo fills entire panel
+    drawPhoto(ctx,img,px,py,pw,ph,0);
+
+    // 2. Speed lines drawn OVER photo with multiply-like effect
+    ctx.save();
+    ctx.beginPath();ctx.rect(px,py,pw,ph);ctx.clip();
+    ctx.globalCompositeOperation='multiply';
+    const maxR=Math.sqrt(pw*pw+ph*ph)*1.4;
+    const step=(Math.PI*2)/lineCount;
+    for(let i=0;i<lineCount;i++){
+      const angle=i*step+(Math.random()*.06-.03);
+      const spread=.004+Math.random()*.02;
+      const inner=maxR*.16+Math.random()*maxR*.1;
+      ctx.beginPath();
+      ctx.moveTo(burstX+Math.cos(angle-spread)*inner, burstY+Math.sin(angle-spread)*inner);
+      ctx.lineTo(burstX+Math.cos(angle)*maxR,          burstY+Math.sin(angle)*maxR);
+      ctx.lineTo(burstX+Math.cos(angle+spread)*inner,  burstY+Math.sin(angle+spread)*inner);
+      ctx.closePath();
+      // dark lines on photo
+      ctx.fillStyle=`rgba(0,0,0,${.45+Math.random()*.3})`;
+      ctx.fill();
+    }
+    ctx.globalCompositeOperation='source-over';
+    // white center bright spot to give "motion focus" feel
+    const grad=ctx.createRadialGradient(burstX,burstY,0,burstX,burstY,Math.min(pw,ph)*.28);
+    grad.addColorStop(0,'rgba(255,255,255,.55)');
+    grad.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=grad;
+    ctx.fillRect(px,py,pw,ph);
+    ctx.restore();
+
+    // 3. Thick border on top of everything
+    ctx.strokeStyle='#000';
+    ctx.lineWidth=borderW;
+    ctx.strokeRect(px+borderW/2,py+borderW/2,pw-borderW,ph-borderW);
+  }
+
+  // ── PANEL 1: top wide — burst from center-left (dramatic portrait)
+  const p1x=PAD, p1y=PAD, p1w=W-PAD*2, p1h=330;
+  panel(I[0], p1x,p1y,p1w,p1h, p1x+p1w*.35, p1y+p1h*.45, 90, BORDER);
+
+  // ── PANEL 2: middle wide — burst from far right (chase scene feel)
+  const p2y=p1y+p1h+GAP, p2w=W-PAD*2, p2h=196;
+  panel(I[1], PAD,p2y,p2w,p2h, PAD+p2w*.85, p2y+p2h*.5, 70, BORDER);
+
+  // ── DIAGONAL CUT between panel 2 and bottom panels
+  const cutY=p2y+p2h+GAP;
+  // white gap then diagonal slash
+  ctx.fillStyle='#fff';ctx.fillRect(PAD,cutY-2,W-PAD*2,GAP+4);
+  ctx.fillStyle='#000';
+  // slash line going top-left to bottom-right
+  ctx.beginPath();
+  ctx.moveTo(PAD, cutY+2);
+  ctx.lineTo(W-PAD, cutY+GAP-2);
+  ctx.lineWidth=BORDER+2;
+  ctx.strokeStyle='#000';
+  ctx.stroke();
+
+  // ── PANELS 3 + 4: bottom split — diagonal divider
+  const p34y=cutY+GAP+4, p34h=H-p34y-PAD;
+  // Diagonal split: panel 3 is left trapezoid, panel 4 is right
+  const splitTop=Math.floor((W-PAD*2)*.40)+PAD;  // split x at top
+  const splitBot=Math.floor((W-PAD*2)*.48)+PAD;  // split x at bottom (angled)
+
+  // Panel 3 — left, burst from top-left corner
+  const p3x=PAD, p3w=splitTop-PAD-GAP/2;
+  panel(I[2], p3x,p34y,p3w,p34h, p3x+p3w*.15, p34y+p34h*.2, 55, BORDER);
+
+  // Diagonal gap between 3 and 4
+  ctx.fillStyle='#fff';
+  ctx.beginPath();
+  ctx.moveTo(splitTop-GAP, p34y);
+  ctx.lineTo(splitBot,     p34y+p34h);
+  ctx.lineTo(splitTop+GAP, p34y+p34h);
+  ctx.lineTo(splitBot+GAP*2, p34y);
+  ctx.closePath();ctx.fill();
+  // Diagonal border lines
+  ctx.strokeStyle='#000';ctx.lineWidth=BORDER;
+  ctx.beginPath();ctx.moveTo(splitTop-GAP/2,p34y);ctx.lineTo(splitBot+GAP/2,p34y+p34h);ctx.stroke();
+
+  // Panel 4 — right, burst from center
+  const p4x=splitBot+GAP/2+1, p4w=W-PAD-p4x;
+  panel(I[3], p4x,p34y,p4w,p34h, p4x+p4w*.5, p34y+p34h*.5, 65, BORDER);
+
+  // ── OUTER BORDER (thick, on very top)
+  ctx.strokeStyle='#000';ctx.lineWidth=8;ctx.strokeRect(4,4,W-8,H-8);
+}},
+
+// ── 9: MANIFESTO ─────────────────────────────────────────────
+{name:'MANIFESTO',W:660,H:1080,
+async render(ctx,I,o){
+  const{W,H}=this,{hl,sub,cap,ed,date,pn}=o;
+  ctx.fillStyle='#f0ece0';ctx.fillRect(0,0,W,H);tex(ctx,W,H,.03);
+
+  // full bleed black header
+  ctx.fillStyle='#0e0a04';ctx.fillRect(0,0,W,116);
+  ctx.fillStyle='#f0ece0';ctx.font='900 64px "Playfair Display",serif';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(pn.toUpperCase()=='MANIFESTO'?'MANIFESTO':pn.toUpperCase(),14,58);
+  ctx.fillStyle='rgba(240,236,224,.12)';ctx.fillText(pn.toUpperCase()=='MANIFESTO'?'MANIFESTO':pn.toUpperCase(),17,61);
+  ctx.fillStyle='#8b6914';ctx.fillRect(0,80,W,2);ctx.fillStyle='#8b1a1a';ctx.fillRect(0,84,W,2);
+  ctx.font='9px "Courier Prime",monospace';ctx.fillStyle='rgba(240,236,224,.65)';ctx.textBaseline='top';
+  ctx.textAlign='left';ctx.fillText(ed+'  ·  '+date,14,92);
+  ctx.textAlign='right';ctx.fillText(pn.toLowerCase()+'.photo  ·  Harga: Gratis',W-14,92);
+  ctx.font='italic 9px "Libre Baskerville",serif';ctx.fillStyle='rgba(200,185,154,.8)';ctx.textAlign='center';ctx.fillText(pn.toUpperCase()+'  ·  The Daily Photographic Chronicle',W/2,106);
+
+  ctx.fillStyle='#8b1a1a';ctx.fillRect(0,116,W,6);
+
+  // BIG headline
+  ctx.font='900 32px "Playfair Display",serif';ctx.fillStyle='#0e0a04';ctx.textAlign='left';ctx.textBaseline='top';
+  const hhEnd=wrapText(ctx,hl,14,130,W-28,38,2);
+  ctx.font='italic 12px "Libre Baskerville",serif';ctx.fillStyle='#8b6914';
+  wrapText(ctx,sub,14,hhEnd,W-28,16,1);
+  byline(ctx,14,hhEnd+18,date,pn);
+  ctx.fillStyle='#0e0a04';ctx.fillRect(0,hhEnd+32,W,4);
+  ctx.fillStyle='#8b1a1a';ctx.fillRect(0,hhEnd+38,W,2);
+
+  // Full-width hero
+  const py1=hhEnd+48,ph1=262;
+  drawPhoto(ctx,I[0],0,py1,W,ph1,.1);
+  ctx.fillStyle='rgba(14,10,4,.72)';ctx.fillRect(0,py1,W,30);
+  ctx.font='bold 10px "Courier Prime",monospace';ctx.fillStyle='#f0ece0';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('↑ FOTO UTAMA  ·  '+cap,10,py1+15);
+  ctx.textAlign='right';ctx.fillText(date,W-10,py1+15);
+  ctx.fillStyle='#0e0a04';ctx.fillRect(0,py1+ph1,W,5);ctx.fillStyle='#8b1a1a';ctx.fillRect(0,py1+ph1+6,W,2);
+
+  // 3-col bottom
+  const rY=py1+ph1+18,cw=(W-24)/3;
+  // col dividers
+  ctx.fillStyle='rgba(26,18,8,.2)';ctx.fillRect(cw+8,rY,1,H-rY-48);ctx.fillRect(cw*2+16,rY,1,H-rY-48);
+
+  // col 1+2 merged as main story, col 3 as photo sidebar
+  const bigW=cw*2+8,ph2=Math.floor((H-rY-56)/2.1);
+  drawPhoto(ctx,I[1],0,rY,bigW,ph2,.12);ctx.strokeStyle='#0e0a04';ctx.lineWidth=2;ctx.strokeRect(0,rY,bigW,ph2);
+  ctx.fillStyle='rgba(14,10,4,.72)';ctx.fillRect(0,rY+ph2-22,bigW,22);
+  ctx.font='italic 9px "Libre Baskerville",serif';ctx.fillStyle='#f0ece0';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('↑ '+cap,6,rY+ph2-11);
+  const sh1=sectionHead(ctx,'Laporan Mendalam',0,rY+ph2+4,bigW,'#0e0a04');
+  byline(ctx,0,sh1,date,pn);
+  textColumn(ctx,lorem(500),0,sh1+12,bigW,11.5,H-48,'8px "Libre Baskerville",serif',true);
+
+  // col 3: 2 stacked photos
+  const c3x=bigW+16,c3w=W-c3x;
+  drawPhoto(ctx,I[2],c3x,rY,c3w,ph2*.48,.12);ctx.strokeStyle='#0e0a04';ctx.lineWidth=2;ctx.strokeRect(c3x,rY,c3w,ph2*.48);
+  drawPhoto(ctx,I[3],c3x,rY+ph2*.48+6,c3w,ph2*.48,.12);ctx.strokeStyle='#0e0a04';ctx.strokeRect(c3x,rY+ph2*.48+6,c3w,ph2*.48);
+  const sh3=sectionHead(ctx,'Galeri',c3x,rY+ph2*.96+14,c3w,'#8b6914');
+  byline(ctx,c3x,sh3,date,pn);
+  textColumn(ctx,lorem(250),c3x,sh3+12,c3w,11.5,H-48,'8px "Libre Baskerville",serif');
+
+  ctx.fillStyle='#0e0a04';ctx.fillRect(0,H-42,W,42);
+  ctx.fillStyle='#8b6914';ctx.fillRect(0,H-42,W,2);
+  ctx.font='10px "Courier Prime",monospace';ctx.fillStyle='#f0ece0';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('MANIFESTO  ·  '+pn.toUpperCase()+'  ·  '+date+'  ·  Dibuat dengan ♥ dan Gratis',W/2,H-26);
+  ctx.font='italic 9px "Libre Baskerville",serif';ctx.fillStyle='rgba(200,185,154,.7)';ctx.fillText('"Gambar adalah kata yang tak terucap"  ·  '+pn.toLowerCase()+'.photo',W/2,H-12);
+}},
+
+// ── 10: THE 1975 — grunge dark photo-forward ─────────────────
+{name:'THE 1975',W:680,H:1120,
+async render(ctx,I,o){
+  const{W,H}=this,{hl,sub,cap,ed,date,pn}=o;
+
+  // grungy dark bg with noise
+  ctx.fillStyle='#d8d0c4';ctx.fillRect(0,0,W,H);
+  // grain texture heavy
+  ctx.save();
+  for(let i=0;i<W*H*.008;i++){
+    const g=Math.random()*80|0;
+    ctx.globalAlpha=Math.random()*.18;
+    ctx.fillStyle=`rgb(${g},${g},${g})`;
+    ctx.fillRect(Math.random()*W,Math.random()*H,Math.random()*3+1,Math.random()*3+1);
+  }
+  ctx.globalAlpha=1;ctx.restore();
+  // aged vignette
+  const vg=ctx.createRadialGradient(W/2,H/2,H*.15,W/2,H/2,H*.85);
+  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.45)');
+  ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+
+  // ── TOP HEADER STRIP
+  ctx.fillStyle='rgba(255,255,255,.92)';ctx.fillRect(0,0,W,90);
+  ctx.strokeStyle='#111';ctx.lineWidth=2;ctx.strokeRect(8,8,120,36);
+  ctx.font='bold 9px "Courier Prime",monospace';ctx.fillStyle='#111';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('LATEST',68,20);ctx.fillText('SPECIAL',68,32);
+  ctx.strokeStyle='#111';ctx.lineWidth=2;ctx.strokeRect(W-128,8,120,36);
+  ctx.font='bold 9px "Courier Prime",monospace';ctx.textAlign='center';ctx.fillText('DAILY',W-68,20);ctx.fillText('REPORT',W-68,32);
+  // BIG masthead name
+  ctx.font='900 52px "Playfair Display",serif';ctx.fillStyle='#0d0d0d';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(pn.toUpperCase(),W/2,50);
+  // meta strip
+  ctx.fillStyle='#0d0d0d';ctx.fillRect(0,90,W,3);
+  ctx.font='9px "Courier Prime",monospace';ctx.fillStyle='#0d0d0d';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('VOL. I... No. 1',10,97);
+  ctx.textAlign='center';ctx.fillText('NOTES ON A PHOTOGRAPHIC FORM',W/2,97);
+  ctx.textAlign='right';ctx.fillText(date,W-10,97);
+  ctx.fillStyle='#0d0d0d';ctx.fillRect(0,109,W,3);
+
+  // ── GIANT HEADLINE
+  ctx.font='900 '+Math.min(72,Math.floor(700/hl.length*4.5))+'px "Playfair Display",serif';
+  ctx.fillStyle='#0d0d0d';ctx.textAlign='left';ctx.textBaseline='top';
+  const words=hl.split(' '),mid=Math.ceil(words.length/2);
+  const line1=words.slice(0,mid).join(' '),line2=words.slice(mid).join(' ');
+  const fsize=Math.min(62,Math.floor(W*0.88/Math.max(ctx.measureText(line1).width/62,1)));
+  ctx.font=`900 ${fsize}px "Playfair Display",serif`;
+  ctx.fillText(line1,10,116);
+  if(line2){
+    ctx.font=`900 ${Math.round(fsize*.72)}px "Playfair Display",serif`;
+    ctx.fillText(line2,10,116+fsize+4);
+  }
+  const headEnd=line2?116+fsize+Math.round(fsize*.72)+10:116+fsize+10;
+  ctx.fillStyle='#0d0d0d';ctx.fillRect(0,headEnd,W,2);
+
+  // ── BIG GREEN-BOX PHOTO (signature 1975 look — full bleed box)
+  const ph1=Math.min(320,Math.floor((H-headEnd-300)/1.1)),py1=headEnd+6;
+  // neon green placeholder frame when no photo, photo when present
+  if(I[0]){
+    drawPhoto(ctx,I[0],0,py1,W,ph1,0);
+    // strong b&w desaturate feel — multiply dark overlay
+    ctx.save();ctx.globalCompositeOperation='multiply';
+    ctx.fillStyle='rgba(180,170,155,.35)';ctx.fillRect(0,py1,W,ph1);
+    ctx.restore();
+  } else {
+    ctx.fillStyle='#39ff14';ctx.fillRect(0,py1,W,ph1);
+  }
+  // bottom caption bar
+  ctx.fillStyle='rgba(255,255,255,.9)';ctx.fillRect(0,py1+ph1,W,3);
+
+  // ── PULL QUOTE
+  const qY=py1+ph1+10;
+  ctx.font='italic 20px "Playfair Display",serif';ctx.fillStyle='#0d0d0d';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('\u201C'+sub+'\u201D',10,qY);
+  ctx.fillStyle='#0d0d0d';ctx.fillRect(0,qY+30,W,1.5);
+
+  // ── 3-COL BODY
+  const bodyY=qY+38,cw=(W-20)/3,ch=H-bodyY-80;
+  ctx.fillStyle='rgba(0,0,0,.15)';ctx.fillRect(cw+10,bodyY,1,ch);ctx.fillRect(cw*2+10,bodyY,1,ch);
+
+  // col 1 — main story drop cap
+  textColumn(ctx,lorem(700),0,bodyY,cw,12.5,bodyY+ch,'8.5px "Libre Baskerville",serif',true);
+
+  // col 2 — photo + text
+  const c2ph=Math.min(130,Math.floor(ch*.42));
+  if(I[1]){drawPhoto(ctx,I[1],cw+10,bodyY,cw,c2ph,0);ctx.save();ctx.globalCompositeOperation='multiply';ctx.fillStyle='rgba(180,170,155,.4)';ctx.fillRect(cw+10,bodyY,cw,c2ph);ctx.restore();}
+  else{ctx.fillStyle='#39ff14';ctx.fillRect(cw+10,bodyY,cw,c2ph);}
+  textColumn(ctx,lorem(400),cw+10,bodyY+c2ph+8,cw,12.5,bodyY+ch,'8.5px "Libre Baskerville",serif');
+
+  // col 3 — photo + text
+  const c3x=cw*2+20;
+  if(I[2]){drawPhoto(ctx,I[2],c3x,bodyY,cw,c2ph,0);ctx.save();ctx.globalCompositeOperation='multiply';ctx.fillStyle='rgba(180,170,155,.4)';ctx.fillRect(c3x,bodyY,cw,c2ph);ctx.restore();}
+  else{ctx.fillStyle='#39ff14';ctx.fillRect(c3x,bodyY,cw,c2ph);}
+  // right box — photo 4
+  const c3ph2=Math.min(110,Math.floor(ch*.35));
+  if(I[3]){drawPhoto(ctx,I[3],c3x,bodyY+c2ph+8,cw,c3ph2,0);ctx.save();ctx.globalCompositeOperation='multiply';ctx.fillStyle='rgba(180,170,155,.4)';ctx.fillRect(c3x,bodyY+c2ph+8,cw,c3ph2);ctx.restore();}
+  else{ctx.fillStyle='#39ff14';ctx.fillRect(c3x,bodyY+c2ph+8,cw,c3ph2);}
+  textColumn(ctx,lorem(200),c3x,bodyY+c2ph+c3ph2+16,cw,12.5,bodyY+ch,'8.5px "Libre Baskerville",serif');
+
+  // ── FOOTER
+  ctx.fillStyle='rgba(255,255,255,.88)';ctx.fillRect(0,H-64,W,64);
+  ctx.fillStyle='#0d0d0d';ctx.fillRect(0,H-64,W,1.5);
+  ctx.font='9px "Courier Prime",monospace';ctx.fillStyle='#0d0d0d';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText(cap,W/2,H-56);
+  ctx.fillStyle='#0d0d0d';ctx.fillRect(0,H-42,W,1);
+  ctx.font='8.5px "Courier Prime",monospace';ctx.fillStyle='#333';
+  ctx.fillText(pn+'  ·  '+pn.toLowerCase()+'.photo  ·  '+date+'  ·  Dibuat dengan ♥ dan Gratis',W/2,H-34);
+  ctx.fillRect(0,H-20,W,1);
+  ctx.font='italic 8px "Libre Baskerville",serif';ctx.fillStyle='#666';
+  ctx.fillText('"'+sub+'"',W/2,H-14);
+}},
+
+// ── 11: YE OLE LONDONER — classic dense broadsheet ───────────
+{name:'YE OLE',W:700,H:1180,
+async render(ctx,I,o){
+  const{W,H}=this,{hl,sub,cap,ed,date,pn}=o;
+  ctx.fillStyle='#fffef8';ctx.fillRect(0,0,W,H);
+  // very light paper tex
+  ctx.save();for(let i=0;i<W*H*.001;i++){const g=200+Math.random()*40|0;ctx.globalAlpha=.06;ctx.fillStyle=`rgb(${g},${g-10},${g-30})`;ctx.fillRect(Math.random()*W,Math.random()*H,1,1);}ctx.globalAlpha=1;ctx.restore();
+
+  // ── MASTHEAD
+  // left box
+  ctx.strokeStyle='#111';ctx.lineWidth=1.5;ctx.strokeRect(6,6,148,46);
+  ctx.font='italic 8.5px "Libre Baskerville",serif';ctx.fillStyle='#111';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('"The pen is mightier',80,12);ctx.fillText('than the sword!"',80,24);
+  // gothic name
+  ctx.font='900 46px "UnifrakturMaguntia",cursive';ctx.fillStyle='#0a0a0a';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText(pn+' Times',W/2,56);
+  // right weather box
+  ctx.strokeStyle='#111';ctx.lineWidth=1.5;ctx.strokeRect(W-154,6,148,46);
+  ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='#111';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('WEATHER REPORT',W-80,10);
+  ctx.font='8px "Courier Prime",monospace';
+  ctx.fillText('Today is sunny with a',W-80,22);ctx.fillText('slight chance of showers.',W-80,32);
+
+  // meta bar
+  ctx.fillStyle='#111';ctx.fillRect(0,62,W,1.5);
+  ctx.font='8px "Courier Prime",monospace';ctx.fillStyle='#111';ctx.textBaseline='middle';
+  ctx.textAlign='left';ctx.fillText('VOL. I, NO. 1',6,72);
+  ctx.textAlign='left';ctx.fillText(('INFO@'+pn.toUpperCase()+'.PHOTO'),140,72);
+  ctx.textAlign='center';ctx.fillStyle='#111';ctx.font='bold 9px "Courier Prime",monospace';ctx.fillText('NEWS FOR TODAY!',W/2,72);
+  ctx.font='8px "Courier Prime",monospace';ctx.fillStyle='#111';
+  ctx.textAlign='right';ctx.fillText('PRICE: FREE',W-6,72);
+  ctx.textAlign='right';ctx.fillText(pn.toUpperCase()+'.PHOTO',W-90,72);
+  ctx.fillStyle='#111';ctx.fillRect(0,80,W,1.5);ctx.fillRect(0,82,W,.5);
+
+  // ── SPLASH HEADLINE — massive
+  ctx.font='900 68px "Playfair Display",serif';ctx.fillStyle='#050505';ctx.textAlign='left';ctx.textBaseline='top';
+  const words2=hl.split(' '),mid2=Math.ceil(words2.length/2);
+  const hl1=words2.slice(0,mid2).join(' ')+'!',hl2=words2.slice(mid2).join(' ');
+  ctx.fillText(hl1,4,88);
+  if(hl2){ctx.font='900 52px "Playfair Display",serif';ctx.fillText(hl2,4,160);}
+  const splashEnd=hl2?220:162;
+  ctx.fillStyle='#111';ctx.fillRect(0,splashEnd,W,2);
+
+  // ── MAIN 2-COL SECTION
+  const sec1Y=splashEnd+8,c1w=Math.floor(W*.54),c2w=W-c1w-12,c1x=0,c2x=c1w+12;
+  ctx.fillStyle='rgba(0,0,0,.15)';ctx.fillRect(c1w+6,sec1Y,1,380);
+
+  // LEFT: big photo
+  const ph1=Math.min(240,Math.floor((H-sec1Y-380)*.85));
+  if(I[0]){drawPhoto(ctx,I[0],c1x,sec1Y,c1w,ph1,.05);}
+  else{ctx.fillStyle='#8bc34a';ctx.fillRect(c1x,sec1Y,c1w,ph1);}
+  ctx.strokeStyle='#111';ctx.lineWidth=1;ctx.strokeRect(c1x,sec1Y,c1w,ph1);
+  ctx.font='italic 7.5px "Libre Baskerville",serif';ctx.fillStyle='#555';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('↑ '+cap,c1x+2,sec1Y+ph1+3);
+
+  // below photo: headline + body
+  ctx.font='bold italic 20px "Playfair Display",serif';ctx.fillStyle='#0a0a0a';ctx.textBaseline='top';
+  const sh1b=sec1Y+ph1+16;
+  const hEnd1=wrapText(ctx,hl,c1x,sh1b,c1w,24,3);
+  ctx.fillStyle='#111';ctx.fillRect(c1x,hEnd1,c1w,.5);
+  byline(ctx,c1x,hEnd1+4,date,pn);
+  textColumn(ctx,lorem(600),c1x,hEnd1+14,c1w,12,sec1Y+380,'8px "Libre Baskerville",serif',true);
+
+  // RIGHT col: headline + body + small photo
+  const rSH=sectionHead(ctx,'Another Headline',c2x,sec1Y,c2w,'#111');
+  textColumn(ctx,lorem(500),c2x,rSH,c2w,12,sec1Y+200,'8px "Libre Baskerville",serif');
+  if(I[1]){drawPhoto(ctx,I[1],c2x,sec1Y+200,c2w,160,.05);}
+  else{ctx.fillStyle='#8bc34a';ctx.fillRect(c2x,sec1Y+200,c2w,160);}
+  ctx.strokeStyle='#111';ctx.lineWidth=1;ctx.strokeRect(c2x,sec1Y+200,c2w,160);
+  ctx.font='italic 7.5px "Libre Baskerville",serif';ctx.fillStyle='#555';ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('The '+pn+' House on Broadway',c2x,sec1Y+364);
+
+  // ── HORIZONTAL DIVIDER + SUB-HEADLINE
+  const sec2Y=sec1Y+386;
+  ctx.fillStyle='#111';ctx.fillRect(0,sec2Y,W,2);
+  ctx.font='bold 30px "Playfair Display",serif';ctx.fillStyle='#0a0a0a';ctx.textAlign='left';ctx.textBaseline='top';
+  wrapText(ctx,sub,0,sec2Y+8,W,34,1);
+  ctx.fillStyle='#111';ctx.fillRect(0,sec2Y+46,W,1);
+
+  // ── 3-COL SECTION
+  const sec3Y=sec2Y+52,cw3=(W-16)/3,ch3=Math.max(160,H-sec3Y-90);
+  ctx.fillStyle='rgba(0,0,0,.15)';ctx.fillRect(cw3+8,sec3Y,1,ch3);ctx.fillRect(cw3*2+8,sec3Y,1,ch3);
+
+  for(let i=0;i<3;i++){
+    const cx=i*(cw3+8);
+    const sh=sectionHead(ctx,'YOUR TITLE HERE',cx,sec3Y,cw3,'#0a0a0a');
+    // photo for col depending on availability
+    const photoIdx=i+2;
+    if(i<2&&I[photoIdx]){
+      drawPhoto(ctx,I[photoIdx],cx,sh,cw3,Math.min(100,Math.floor(ch3*.38)),.05);
+      ctx.strokeStyle='#ccc';ctx.lineWidth=1;ctx.strokeRect(cx,sh,cw3,Math.min(100,Math.floor(ch3*.38)));
+      textColumn(ctx,lorem(220),cx,sh+Math.min(100,Math.floor(ch3*.38))+6,cw3,12,sec3Y+ch3,'8px "Libre Baskerville",serif');
+    } else {
+      textColumn(ctx,lorem(300),cx,sh,cw3,12,sec3Y+ch3,'8px "Libre Baskerville",serif');
+    }
+  }
+
+  // ── AD BANNER footer
+  ctx.fillStyle='#111';ctx.fillRect(0,H-72,W,1.5);
+  ctx.strokeStyle='#111';ctx.lineWidth=1.5;ctx.strokeRect(4,H-68,W-8,60);
+  // crown decorations
+  const drawCrown=(x,y)=>{ctx.font='20px serif';ctx.fillStyle='#0a0a0a';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('♛',x,y);};
+  drawCrown(36,H-38);drawCrown(W-36,H-38);
+  ctx.font='italic bold 26px "Playfair Display",serif';ctx.fillStyle='#0a0a0a';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(pn+' · Dibuat dengan ♥ dan Gratis',W/2,H-38);
+  ctx.font='8px "Courier Prime",monospace';ctx.fillStyle='#666';ctx.textBaseline='bottom';
+  ctx.fillText(pn.toLowerCase()+'.photo  ·  '+date,W/2,H-8);
+}},
+
+// ── 12: MODERN TEMPLATE — Google Docs newspaper style ────────
+{name:'MODERN TEMPLATE',W:660,H:1100,
+async render(ctx,I,o){
+  const{W,H}=this;
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);
+
+  const PAD=20;
+
+  // ── TOP META
+  ctx.font='10px "Courier Prime",monospace';ctx.fillStyle='#333';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('Issue #, News',PAD,12);
+  ctx.textAlign='right';ctx.fillText('• '+o.date,W-PAD,12);
+  ctx.fillStyle='#000';ctx.fillRect(PAD,26,W-PAD*2,1.5);
+
+  // ── GIANT MASTHEAD
+  ctx.font='900 72px "Playfair Display",serif';ctx.fillStyle='#050505';ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  // scale text to fit width
+  const mastText=o.hl.length>10?o.hl.substring(0,10).toUpperCase():o.hl.toUpperCase();
+  ctx.fillText('NEWSPAPER',PAD,108);
+  ctx.fillStyle='#000';ctx.fillRect(PAD,116,W-PAD*2,2);ctx.fillRect(PAD,120,W-PAD*2,.5);
+
+  // ── SECTION 1: hero photo full width
+  const heroH=200;const heroY=130;
+  if(I[0]){drawPhoto(ctx,I[0],PAD,heroY,W-PAD*2,heroH,.04);}
+  else{ctx.fillStyle='#aaa';ctx.fillRect(PAD,heroY,W-PAD*2,heroH);ctx.font='13px "Courier Prime",monospace';ctx.fillStyle='rgba(255,255,255,.7)';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('PHOTO HERE (7.7×4.5in)',W/2,heroY+heroH/2);}
+  ctx.fillStyle='#ddd';ctx.fillRect(PAD,heroY+heroH,W-PAD*2,1);
+
+  // ── SECTION 2: 2-col with photos
+  const s2Y=heroY+heroH+14;
+  const col2w=(W-PAD*2-12)/2, col2x2=PAD+col2w+12;
+  ctx.fillStyle='rgba(0,0,0,.08)';ctx.fillRect(col2x2-7,s2Y,1,210);
+
+  // Left col photo
+  const ph2=110;
+  if(I[1]){drawPhoto(ctx,I[1],PAD,s2Y,col2w,ph2,.04);}
+  else{ctx.fillStyle='#bbb';ctx.fillRect(PAD,s2Y,col2w,ph2);ctx.font='11px "Courier Prime",monospace';ctx.fillStyle='rgba(255,255,255,.8)';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('PHOTO HERE',PAD+col2w/2,s2Y+ph2/2);}
+  ctx.fillStyle='#ddd';ctx.fillRect(PAD,s2Y+ph2,col2w,1);
+
+  // Left col headline
+  ctx.font='bold 15px "Playfair Display",serif';ctx.fillStyle='#0a0a0a';ctx.textAlign='left';ctx.textBaseline='top';
+  const lh2End=wrapText(ctx,o.hl,PAD,s2Y+ph2+8,col2w,20,s2Y+ph2+56);
+  ctx.fillStyle='#999';ctx.fillRect(PAD,lh2End,col2w,.5);
+  ctx.font='10px "Courier Prime",monospace';ctx.fillStyle='#666';ctx.textBaseline='top';ctx.fillText(o.date,PAD,lh2End+4);
+  textColumn(ctx,lorem(280),PAD,lh2End+16,col2w,12.5,s2Y+210,'8.5px "Libre Baskerville",serif');
+
+  // Right col: headline + body (no photo)
+  ctx.font='bold 14px "Playfair Display",serif';ctx.fillStyle='#0a0a0a';ctx.textAlign='left';ctx.textBaseline='top';
+  const rh2End=wrapText(ctx,o.sub,col2x2,s2Y,col2w,20,s2Y+52);
+  ctx.fillStyle='#999';ctx.fillRect(col2x2,rh2End,col2w,.5);
+  ctx.font='10px "Courier Prime",monospace';ctx.fillStyle='#666';ctx.fillText(o.date,col2x2,rh2End+4);
+  textColumn(ctx,lorem(320),col2x2,rh2End+16,col2w,12.5,s2Y+210,'8.5px "Libre Baskerville",serif');
+
+  // ── DIVIDER
+  const s3Y=s2Y+216;
+  ctx.fillStyle='#000';ctx.fillRect(PAD,s3Y,W-PAD*2,1.5);
+
+  // ── SECTION 3: 3-col with dark highlight box
+  const c3w=(W-PAD*2-24)/3, s3bodyY=s3Y+8;
+  ctx.fillStyle='rgba(0,0,0,.07)';ctx.fillRect(PAD+c3w+8,s3bodyY,1,H-s3bodyY-46);ctx.fillRect(PAD+c3w*2+16,s3bodyY,1,H-s3bodyY-46);
+
+  // Col 1: photo + text
+  const c3ph=Math.min(100,Math.floor((H-s3bodyY-60)*.4));
+  if(I[2]){drawPhoto(ctx,I[2],PAD,s3bodyY,c3w,c3ph,.04);}else{ctx.fillStyle='#bbb';ctx.fillRect(PAD,s3bodyY,c3w,c3ph);ctx.font='9px "Courier Prime",monospace';ctx.fillStyle='rgba(255,255,255,.8)';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('PHOTO HERE',PAD+c3w/2,s3bodyY+c3ph/2);}
+  ctx.fillStyle='#ddd';ctx.fillRect(PAD,s3bodyY+c3ph,c3w,1);
+  ctx.font='bold 12px "Playfair Display",serif';ctx.fillStyle='#0a0a0a';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('Esque libero eget',PAD,s3bodyY+c3ph+8);
+  ctx.fillStyle='#999';ctx.fillRect(PAD,s3bodyY+c3ph+22,c3w,.5);
+  textColumn(ctx,lorem(240),PAD,s3bodyY+c3ph+26,c3w,12.5,H-46,'8.5px "Libre Baskerville",serif');
+
+  // Col 2: photo + text
+  const c2start=PAD+c3w+8;
+  if(I[3]){drawPhoto(ctx,I[3],c2start,s3bodyY,c3w,c3ph,.04);}else{ctx.fillStyle='#bbb';ctx.fillRect(c2start,s3bodyY,c3w,c3ph);ctx.font='9px "Courier Prime",monospace';ctx.fillStyle='rgba(255,255,255,.8)';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('PHOTO HERE',c2start+c3w/2,s3bodyY+c3ph/2);}
+  ctx.fillStyle='#ddd';ctx.fillRect(c2start,s3bodyY+c3ph,c3w,1);
+  ctx.font='bold 12px "Playfair Display",serif';ctx.fillStyle='#0a0a0a';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('Licitudin enim',c2start,s3bodyY+c3ph+8);
+  ctx.fillStyle='#999';ctx.fillRect(c2start,s3bodyY+c3ph+22,c3w,.5);
+  textColumn(ctx,lorem(240),c2start,s3bodyY+c3ph+26,c3w,12.5,H-46,'8.5px "Libre Baskerville",serif');
+
+  // Col 3: dark highlight box with text
+  const c3start=PAD+c3w*2+16;
+  ctx.fillStyle='#2a2a2a';ctx.fillRect(c3start,s3bodyY,c3w,H-s3bodyY-46);
+  ctx.font='bold italic 14px "Playfair Display",serif';ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='top';
+  wrapText(ctx,'Ligula id ipsum ultrices luctus eget eget elit',c3start+8,s3bodyY+8,c3w-16,19,s3bodyY+80);
+  ctx.fillStyle='rgba(255,255,255,.3)';ctx.fillRect(c3start+8,s3bodyY+86,c3w-16,.5);
+  textColumn(ctx,lorem(300),c3start+8,s3bodyY+90,c3w-16,12,H-50,'8px "Libre Baskerville",serif');
+  // override text color for dark box
+  ctx.fillStyle='rgba(255,255,255,.75)';
+  // Re-draw text in white (textColumn sets color to #1a1208, need to overlay)
+  ctx.globalCompositeOperation='source-over';
+
+  // ── FOOTER
+  ctx.fillStyle='#000';ctx.fillRect(PAD,H-36,W-PAD*2,1);
+  ctx.font='9px "Courier Prime",monospace';ctx.fillStyle='#333';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('Empty Newspaper',PAD,H-28);
+  ctx.textAlign='right';ctx.fillText('Page 1 of 6',W-PAD,H-28);
+  ctx.fillStyle='#000';ctx.fillRect(PAD,H-10,W-PAD*2,1);
+}},
+
+// ── 13: THE SUN — British grunge tabloid, 1 foto ──────────────
+{name:'THE SUN',W:680,H:980,photosRequired:1,
+async render(ctx,I,o){
+  const{W,H}=this,{hl,sub,cap,ed,pn,date}=o;
+
+  // ── grungy aged newsprint bg
+  ctx.fillStyle='#c8c0b0';ctx.fillRect(0,0,W,H);
+  // heavy grain
+  ctx.save();
+  for(let i=0;i<W*H*.012;i++){
+    const g=80+Math.random()*120|0;
+    ctx.globalAlpha=Math.random()*.22;
+    ctx.fillStyle=`rgb(${g},${g-10},${g-20})`;
+    const sz=Math.random()*2.5+.5;
+    ctx.fillRect(Math.random()*W,Math.random()*H,sz,sz);
+  }
+  ctx.globalAlpha=1;ctx.restore();
+  // vignette
+  const vg=ctx.createRadialGradient(W/2,H*.4,60,W/2,H*.4,W*.9);
+  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');
+  ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+
+  // ── TOP MASTHEAD
+  // Red Sun box (left)
+  const sunW=130,sunH=58;
+  ctx.fillStyle='#cc1a1a';ctx.fillRect(0,0,sunW,sunH);
+  ctx.fillStyle='rgba(180,20,20,.9)';ctx.fillRect(2,2,sunW-4,sunH-4);
+  // "THE" small
+  ctx.font='bold 13px "Courier Prime",monospace';ctx.fillStyle='#f5f0e8';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('THE',sunW/2,5);
+  // "Sun" big italic serif
+  ctx.font='900 italic 38px "Playfair Display",serif';ctx.fillStyle='#fff';ctx.textBaseline='alphabetic';
+  ctx.fillText(pn,sunW/2,sunH-6);
+  // shadow behind Sun text
+  ctx.globalAlpha=.3;ctx.font='900 italic 38px "Playfair Display",serif';ctx.fillStyle='#000';
+  ctx.fillText(pn,sunW/2+2,sunH-4);ctx.globalAlpha=1;
+  ctx.font='900 italic 38px "Playfair Display",serif';ctx.fillStyle='#fff';ctx.fillText(pn,sunW/2,sunH-6);
+
+  // meta strip next to logo
+  ctx.font='7px "Courier Prime",monospace';ctx.fillStyle='#1a1208';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText(date,sunW+8,6);
+  ctx.fillText(ed+'  ·  '+pn.toLowerCase()+'.photo',sunW+8,16);
+  ctx.fillText('Harga: Gratis',sunW+8,26);
+
+  // ── MEGA HEADLINE — 2 lines
+  const words=hl.split(' '),mid=Math.ceil(words.length/2);
+  const line1=words.slice(0,mid).join(' '),line2=words.slice(mid).join(' ');
+  // measure to fit width
+  let fs=Math.min(88, Math.floor(W*0.96/Math.max(line1.length,line2.length||1)*1.55));
+  fs=Math.max(fs,48);
+  ctx.font=`900 ${fs}px "Playfair Display",serif`;
+  ctx.fillStyle='#0d0d0d';ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  // black outline for grunge feel
+  ctx.strokeStyle='rgba(0,0,0,.5)';ctx.lineWidth=4;
+  ctx.strokeText(line1,4,sunH+fs+4);
+  ctx.fillText(line1,4,sunH+fs+4);
+  if(line2){
+    const fs2=Math.min(fs,Math.floor(W*0.96/Math.max(line2.length,1)*1.55));
+    ctx.font=`900 ${fs2}px "Playfair Display",serif`;
+    ctx.strokeText(line2,4,sunH+fs+fs2+8);
+    ctx.fillText(line2,4,sunH+fs+fs2+8);
+  }
+  const headEnd=line2?sunH+fs+Math.min(fs,80)+16:sunH+fs+12;
+
+  // thin rule
+  ctx.fillStyle='#1a1208';ctx.fillRect(0,headEnd,W,2);
+
+  // ── BIG PHOTO — takes most of the page
+  const photoH=Math.min(430,H-headEnd-160);
+  if(I[0]){
+    drawPhoto(ctx,I[0],0,headEnd+2,W,photoH,0);
+    // strong b&w feel — heavy sepia multiply
+    ctx.save();ctx.globalCompositeOperation='multiply';
+    ctx.fillStyle='rgba(100,90,70,.5)';ctx.fillRect(0,headEnd+2,W,photoH);
+    ctx.restore();
+    // grain over photo
+    ctx.save();
+    for(let i=0;i<W*photoH*.006;i++){
+      const g=Math.random()*80|0;
+      ctx.globalAlpha=Math.random()*.15;
+      ctx.fillStyle=`rgb(${g},${g},${g})`;
+      ctx.fillRect(Math.random()*W,headEnd+2+Math.random()*photoH,2,2);
+    }
+    ctx.globalAlpha=1;ctx.restore();
+  } else {
+    // placeholder — solid dark
+    ctx.fillStyle='#1a1208';ctx.fillRect(0,headEnd+2,W,photoH);
+    ctx.font='bold 16px "Courier Prime",monospace';ctx.fillStyle='rgba(255,255,255,.2)';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('FOTO DI SINI',W/2,headEnd+2+photoH/2);
+  }
+
+  // bottom caption bar over photo
+  ctx.fillStyle='rgba(20,14,6,.85)';ctx.fillRect(0,headEnd+2+photoH-32,W,32);
+  ctx.font='italic 11px "Libre Baskerville",serif';ctx.fillStyle='#f0e8d0';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('  '+cap,0,headEnd+2+photoH-16);
+
+  // ── SUB-STORY AREA below photo
+  const storyY=headEnd+photoH+8;
+  // left col — main text
+  const lcw=Math.floor(W*.62);
+  ctx.font='bold 14px "Playfair Display",serif';ctx.fillStyle='#0d0d0d';ctx.textAlign='left';ctx.textBaseline='top';
+  let subEnd=wrapText(ctx,sub,6,storyY,lcw,18,2);
+  ctx.fillStyle='#1a1208';ctx.fillRect(6,subEnd,lcw-6,1);
+  byline(ctx,6,subEnd+4,date,pn);
+  textColumn(ctx,lorem(500),6,subEnd+16,lcw-6,12,H-38,'8px "Libre Baskerville",serif',true);
+
+  // right col — small box story
+  const rcx=lcw+10,rcw=W-rcx-6;
+  ctx.fillStyle='rgba(0,0,0,.08)';ctx.fillRect(lcw+5,storyY,1,H-storyY-36);
+  const rsh=sectionHead(ctx,'Dari Redaksi',rcx,storyY,rcw,'#1a1208');
+  textColumn(ctx,lorem(250),rcx,rsh,rcw,12,H-38,'8px "Libre Baskerville",serif');
+
+  // ── FOOTER TICKER
+  ctx.fillStyle='#cc1a1a';ctx.fillRect(0,H-30,W,30);
+  ctx.font='bold 10px "Courier Prime",monospace';ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('⬥  '+cap.toUpperCase()+'  ⬥  '+pn.toUpperCase()+'  ·  Dibuat dengan ♥ dan Gratis  ⬥',W/2,H-15);
+}},
+
+// ── 14: WANTED — One Piece bounty poster ─────────────────────
+{name:'WANTED',W:560,H:820,photosRequired:1,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // ── PARCHMENT BACKGROUND
+  // base fill — warm beige like the reference
+  ctx.fillStyle='#d8ceae';ctx.fillRect(0,0,W,H);
+
+  // subtle horizontal grain streaks (aged paper feel)
+  ctx.save();
+  for(let y=0;y<H;y+=2){
+    ctx.globalAlpha=Math.random()*.04;
+    ctx.fillStyle=Math.random()>.5?'#c8b88e':'#e8d8b8';
+    ctx.fillRect(0,y,W,1);
+  }
+  // random grain dots
+  for(let i=0;i<W*H*.003;i++){
+    const g=150+Math.random()*60|0;
+    ctx.globalAlpha=Math.random()*.1;
+    ctx.fillStyle=`rgb(${g-20},${g-30},${g-50})`;
+    ctx.fillRect(Math.random()*W,Math.random()*H,Math.random()*2.5+.5,1);
+  }
+  ctx.globalAlpha=1;ctx.restore();
+
+  // edge vignette / worn edges
+  const ev=ctx.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,H*.78);
+  ev.addColorStop(0,'rgba(0,0,0,0)');ev.addColorStop(1,'rgba(30,18,4,.38)');
+  ctx.fillStyle=ev;ctx.fillRect(0,0,W,H);
+
+  // ── THIN OUTER BORDER (like reference)
+  ctx.strokeStyle='rgba(80,55,20,.5)';ctx.lineWidth=1.5;ctx.strokeRect(6,6,W-12,H-12);
+
+  const INK='#2a1c08'; // dark brown ink color from reference
+  const MX=22;         // margin x
+
+  // ── "WANTED" — massive condensed serif
+  // The reference font is very wide, condensed, heavy
+  ctx.save();
+  ctx.font='900 104px "Playfair Display",serif';
+  ctx.fillStyle=INK;
+  ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  // Apply slight x-scale to make it wider like reference
+  ctx.scale(1.08,1);
+  ctx.fillText('WANTED',W/2/1.08,104);
+  // rough worn texture on text — re-draw with slight offset lighter
+  ctx.globalAlpha=.12;ctx.fillStyle='#fff';
+  ctx.fillText('WANTED',W/2/1.08-1,103);
+  ctx.restore();
+
+  // ── PHOTO FRAME — clean white rectangle with thick dark border
+  const fPAD=6; // frame padding around photo
+  const fX=MX, fY=114;
+  const fW=W-MX*2, fH=310;
+
+  // outer shadow/worn edge
+  ctx.fillStyle='rgba(40,26,6,.25)';ctx.fillRect(fX+4,fY+4,fW,fH);
+  // thick dark border
+  ctx.fillStyle=INK;ctx.fillRect(fX,fY,fW,fH);
+  // white mat inside
+  ctx.fillStyle='#f8f4e8';ctx.fillRect(fX+fPAD,fY+fPAD,fW-fPAD*2,fH-fPAD*2);
+
+  // photo fills inner area completely
+  const pX=fX+fPAD, pY=fY+fPAD, pW=fW-fPAD*2, pH=fH-fPAD*2;
+  if(I[0]){
+    drawPhoto(ctx,I[0],pX,pY,pW,pH,0);
+  } else {
+    ctx.fillStyle='#f0ece0';ctx.fillRect(pX,pY,pW,pH);
+  }
+
+  // ── DEAD OR ALIVE section
+  const doaY=fY+fH+14;
+
+  // Left scroll ornament — drawn with canvas paths to match reference curls
+  function drawScrollLeft(x,y,h){
+    ctx.save();ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.fillStyle='none';
+    // top curl
+    ctx.beginPath();
+    ctx.moveTo(x+18,y);
+    ctx.bezierCurveTo(x+18,y-8, x,y-8, x,y+h*.25);
+    ctx.bezierCurveTo(x,y+h*.55, x+18,y+h*.55, x+18,y+h*.3);
+    ctx.stroke();
+    // bottom curl mirror
+    ctx.beginPath();
+    ctx.moveTo(x+18,y+h);
+    ctx.bezierCurveTo(x+18,y+h+8, x,y+h+8, x,y+h*.75);
+    ctx.bezierCurveTo(x,y+h*.45, x+18,y+h*.45, x+18,y+h*.7);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function drawScrollRight(x,y,h){
+    ctx.save();ctx.strokeStyle=INK;ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(x-18,y);
+    ctx.bezierCurveTo(x-18,y-8, x,y-8, x,y+h*.25);
+    ctx.bezierCurveTo(x,y+h*.55, x-18,y+h*.55, x-18,y+h*.3);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x-18,y+h);
+    ctx.bezierCurveTo(x-18,y+h+8, x,y+h+8, x,y+h*.75);
+    ctx.bezierCurveTo(x,y+h*.45, x-18,y+h*.45, x-18,y+h*.7);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  const scrollH=46;
+  drawScrollLeft(MX,doaY,scrollH);
+  drawScrollRight(W-MX,doaY,scrollH);
+
+  // "DEAD  OR  ALIVE" — spaced like reference
+  ctx.font='bold 30px "Playfair Display",serif';
+  ctx.fillStyle=INK;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('DEAD  OR  ALIVE',W/2,doaY+scrollH/2);
+
+  // thin rules above/below DOA text
+  ctx.fillStyle=INK;
+  ctx.fillRect(MX+24,doaY+1,W-MX*2-48,1.5);
+  ctx.fillRect(MX+24,doaY+scrollH-2,W-MX*2-48,1.5);
+
+  // ── BOUNTY ROW
+  const bY=doaY+scrollH+16;
+
+  // Left scroll ornament (smaller, for bounty area)
+  drawScrollLeft(MX,bY-2,48);
+  drawScrollRight(W-MX,bY-2,48);
+
+  // thin rules
+  ctx.fillStyle=INK;
+  ctx.fillRect(MX+24,bY-2,W-MX*2-48,1.5);
+  ctx.fillRect(MX+24,bY+46,W-MX*2-48,1.5);
+
+  // Bounty symbol ฿ (stylized like One Piece "B" with lines)
+  ctx.font='900 38px "Playfair Display",serif';
+  ctx.fillStyle=INK;ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('\u0042',MX+26,bY+22); // B
+  // cross lines on the B to make ฿-like symbol
+  ctx.strokeStyle=INK;ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(MX+21,bY+10);ctx.lineTo(MX+46,bY+10);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(MX+21,bY+34);ctx.lineTo(MX+46,bY+34);ctx.stroke();
+
+  // Bounty amount
+  ctx.font='900 36px "Playfair Display",serif';
+  ctx.fillStyle=INK;ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('500,000,000\u2013',MX+54,bY+22);
+
+  // ── DISCLAIMER + MARINE row
+  const discY=bY+52;
+  ctx.fillStyle=INK;
+
+  // disclaimer text (left)
+  ctx.font='5.5px "Courier Prime",monospace';ctx.fillStyle=INK;ctx.textAlign='left';ctx.textBaseline='top';
+  const lines=[
+    'KONO SARUHIN WA FICTION DETHUNODE JITSUZAISURU JINBUTSU BANTAI',
+    'SONOTA NO SOSHIKI TO DOITSU NO  MASHOU GA GERICHU NI TOUYOU',
+    'SHITTATOSHITEMO JITSUZAI NI MONOTOWA ISSAI MUKANKEIDETH.',
+  ];
+  lines.forEach((l,i)=>ctx.fillText(l,MX+2,discY+i*9));
+
+  // "MARINE" — large bold right-aligned
+  ctx.font='900 36px "Playfair Display",serif';
+  ctx.fillStyle=INK;ctx.textAlign='right';ctx.textBaseline='middle';
+  ctx.fillText('MARINE',W-MX-2,discY+14);
+}},
+
+// ── 15: NEON CITY — cyberpunk neon gradient modern ────────────
+{name:'NEON CITY',W:640,H:1080,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // Deep dark bg
+  ctx.fillStyle='#0a0a12';ctx.fillRect(0,0,W,H);
+
+  // Gradient mesh bg — purple to teal
+  const g1=ctx.createRadialGradient(W*.2,H*.1,0,W*.2,H*.1,W*.7);
+  g1.addColorStop(0,'rgba(120,40,220,.35)');g1.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g1;ctx.fillRect(0,0,W,H);
+  const g2=ctx.createRadialGradient(W*.85,H*.6,0,W*.85,H*.6,W*.6);
+  g2.addColorStop(0,'rgba(0,220,180,.28)');g2.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g2;ctx.fillRect(0,0,W,H);
+  const g3=ctx.createRadialGradient(W*.5,H*.95,0,W*.5,H*.95,W*.5);
+  g3.addColorStop(0,'rgba(255,60,120,.22)');g3.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g3;ctx.fillRect(0,0,W,H);
+
+  // Scanline overlay
+  ctx.save();
+  for(let y=0;y<H;y+=3){
+    ctx.globalAlpha=.04;ctx.fillStyle='#000';
+    ctx.fillRect(0,y,W,1.5);
+  }
+  ctx.globalAlpha=1;ctx.restore();
+
+  // ── TOP HEADER
+  // Gradient pill header
+  const hg=ctx.createLinearGradient(0,0,W,0);
+  hg.addColorStop(0,'#7828dc');hg.addColorStop(.5,'#00dcd4');hg.addColorStop(1,'#ff3c78');
+  ctx.fillStyle=hg;ctx.fillRect(0,0,W,52);
+
+  // SNAPCAN text
+  ctx.font='900 28px "Playfair Display",serif';
+  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('SNAPCAN',W/2,26);
+  ctx.font='bold 9px "Courier Prime",monospace';
+  ctx.fillStyle='rgba(255,255,255,.7)';
+  ctx.fillText('NEON CITY EDITION  ·  4 SHOTS',W/2,42);
+
+  // ── GRID: 2×2 photos
+  const PAD=12,GAP=8;
+  const pw=(W-PAD*2-GAP)/2, ph=(H-52-PAD*2-GAP*3-60)/2;
+  const gridY=52+PAD;
+
+  const neonColors=[
+    ['#ff3c78','#ff9f1c'], // pink → orange
+    ['#7828dc','#00dcd4'], // purple → teal
+    ['#00dcd4','#3cff8f'], // teal → green
+    ['#ff3c78','#7828dc'], // pink → purple
+  ];
+
+  for(let i=0;i<4;i++){
+    const col=i%2, row=Math.floor(i/2);
+    const px=PAD+col*(pw+GAP), py=gridY+row*(ph+GAP);
+    const [c1,c2]=neonColors[i];
+
+    // Neon glow border — gradient stroke
+    const borderG=ctx.createLinearGradient(px,py,px+pw,py+ph);
+    borderG.addColorStop(0,c1);borderG.addColorStop(1,c2);
+
+    // Glow shadow effect
+    ctx.save();
+    ctx.shadowColor=c1;ctx.shadowBlur=18;
+    ctx.strokeStyle=borderG;ctx.lineWidth=3;
+    ctx.strokeRect(px,py,pw,ph);
+    ctx.restore();
+
+    // Photo inside
+    drawPhoto(ctx,I[i],px+2,py+2,pw-4,ph-4,0);
+
+    // Gradient overlay at bottom of each photo
+    const og=ctx.createLinearGradient(px,py+ph-40,px,py+ph);
+    og.addColorStop(0,'rgba(0,0,0,0)');og.addColorStop(1,'rgba(0,0,0,.65)');
+    ctx.fillStyle=og;ctx.fillRect(px+2,py+ph-40,pw-4,40);
+
+    // Photo number badge — neon pill
+    ctx.save();
+    ctx.shadowColor=c1;ctx.shadowBlur=10;
+    const bg2=ctx.createLinearGradient(px+6,py+6,px+34,py+6);
+    bg2.addColorStop(0,c1);bg2.addColorStop(1,c2);
+    ctx.fillStyle=bg2;
+    // rounded rect
+    ctx.beginPath();
+    ctx.roundRect(px+6,py+6,28,20,10);
+    ctx.fill();
+    ctx.restore();
+    ctx.font='bold 10px "Courier Prime",monospace';
+    ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('0'+(i+1),px+20,py+16);
+  }
+
+  // ── BOTTOM STRIP
+  const botY=gridY+ph*2+GAP+PAD;
+
+  // Gradient line separator
+  const lg=ctx.createLinearGradient(0,botY,W,botY);
+  lg.addColorStop(0,'#ff3c78');lg.addColorStop(.33,'#7828dc');
+  lg.addColorStop(.66,'#00dcd4');lg.addColorStop(1,'#3cff8f');
+  ctx.fillStyle=lg;ctx.fillRect(0,botY,W,2);
+
+  // Date + tagline
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  ctx.font='bold 11px "Courier Prime",monospace';
+  ctx.fillStyle='rgba(255,255,255,.5)';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText(dateStr.toUpperCase(),PAD,botY+8);
+  ctx.textAlign='right';ctx.fillText('snapcan.photo',W-PAD,botY+8);
+
+  // Big neon tagline
+  ctx.font='900 22px "Playfair Display",serif';
+  const tg=ctx.createLinearGradient(0,0,W,0);
+  tg.addColorStop(0,'#ff3c78');tg.addColorStop(.5,'#00dcd4');tg.addColorStop(1,'#7828dc');
+  ctx.fillStyle=tg;ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('Snap Neon by Snapcan',W/2,botY+24);
+
+  ctx.font='9px "Courier Prime",monospace';
+  ctx.fillStyle='rgba(255,255,255,.35)';
+  ctx.fillText('Dibuat dengan ♥ dan Gratis  ·  Snapcan Photobooth',W/2,botY+50);
+}},
+
+// ── 16: PASTEL ZINE — Y2K aesthetic soft pastel ───────────────
+{name:'PASTEL ZINE',W:620,H:1060,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // Warm cream bg
+  ctx.fillStyle='#fdf6ee';ctx.fillRect(0,0,W,H);
+
+  // Subtle noise texture
+  ctx.save();
+  for(let i=0;i<W*H*.002;i++){
+    ctx.globalAlpha=Math.random()*.06;
+    ctx.fillStyle=`hsl(${Math.random()*60+20},60%,${60+Math.random()*20}%)`;
+    ctx.fillRect(Math.random()*W,Math.random()*H,1.5,1.5);
+  }
+  ctx.globalAlpha=1;ctx.restore();
+
+  // ── HEADER — big colorful type
+  // Background color block
+  ctx.fillStyle='#ffb3c6';ctx.fillRect(0,0,W,72);
+  // Checkerboard accent strip
+  for(let x=0;x<W;x+=16){
+    ctx.fillStyle=x%32===0?'#ff85a1':'#ffc2d1';
+    ctx.fillRect(x,60,16,12);
+  }
+
+  ctx.font='900 44px "Playfair Display",serif';
+  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+  // Text shadow
+  ctx.fillStyle='rgba(180,60,100,.3)';ctx.fillText('SNAPCAN',W/2+2,36+2);
+  ctx.fillStyle='#fff';ctx.fillText('SNAPCAN',W/2,36);
+
+  ctx.font='bold 9px "Courier Prime",monospace';
+  ctx.fillStyle='rgba(255,255,255,.85)';
+  ctx.fillText('✦  PASTEL ZINE EDITION  ✦',W/2,58);
+
+  // ── MAIN LARGE PHOTO (photo 1) — with decorative frame
+  const mx=18,ph1=290,py1=84;
+
+  // Offset shadow (Y2K style)
+  ctx.fillStyle='#b5ead7';ctx.fillRect(mx+8,py1+8,W-mx*2,ph1);
+  // Photo
+  drawPhoto(ctx,I[0],mx,py1,W-mx*2,ph1,.04);
+  // Pastel border
+  ctx.strokeStyle='#ff85a1';ctx.lineWidth=4;ctx.strokeRect(mx,py1,W-mx*2,ph1);
+
+  // Star/sparkle decorations
+  const stars=[[mx-6,py1+20,'#ffcf77'],[W-mx+6,py1+40,'#b5ead7'],
+                [mx+30,py1-8,'#c7ceea'],[W-mx-30,py1-6,'#ffdac1']];
+  stars.forEach(([sx,sy,sc])=>{
+    ctx.font='16px serif';ctx.fillStyle=sc;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('✦',sx,sy);
+  });
+
+  // Caption sticker
+  ctx.save();
+  ctx.translate(mx+W/2-mx, py1+ph1-28);
+  ctx.fillStyle='#ffb3c6';
+  ctx.beginPath();ctx.roundRect(-W/2+mx+10,0,W-mx*2-20,26,13);ctx.fill();
+  ctx.font='bold 10px "Courier Prime",monospace';
+  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+  const dateStr=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  ctx.fillText('📸  '+dateStr.toUpperCase(),0,13);
+  ctx.restore();
+
+  // ── 3 BOTTOM PHOTOS in a row with varied pastel frames
+  const bColors=['#c7ceea','#b5ead7','#ffdac1'];
+  const bph=200,bph_row=py1+ph1+20;
+  const bw=(W-mx*2-16)/3;
+  for(let i=0;i<3;i++){
+    const bx=mx+i*(bw+8);
+    const bc=bColors[i];
+
+    // Offset shadow
+    ctx.fillStyle=bc;ctx.globalAlpha=.5;
+    ctx.fillRect(bx+6,bph_row+6,bw,bph);
+    ctx.globalAlpha=1;
+
+    drawPhoto(ctx,I[i+1],bx,bph_row,bw,bph,.04);
+    ctx.strokeStyle=bc;ctx.lineWidth=3;ctx.strokeRect(bx,bph_row,bw,bph);
+
+    // Number tag — rounded sticker
+    ctx.fillStyle=bc;
+    ctx.beginPath();ctx.roundRect(bx+6,bph_row+6,26,18,9);ctx.fill();
+    ctx.font='bold 9px "Courier Prime",monospace';
+    ctx.fillStyle='#555';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('0'+(i+2),bx+19,bph_row+15);
+  }
+
+  // ── FOOTER AREA
+  const footY=bph_row+bph+16;
+  // Squiggly divider (approximated with arcs)
+  ctx.beginPath();
+  ctx.strokeStyle='#ffb3c6';ctx.lineWidth=2;
+  let fx=0;
+  while(fx<W){
+    ctx.arc(fx+8,footY,8,Math.PI,0,false);
+    fx+=16;
+  }
+  ctx.stroke();
+
+  ctx.font='900 18px "Playfair Display",serif';
+  ctx.fillStyle='#ff85a1';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('Give feedback and help us develop ♡',W/2,footY+14);
+
+  ctx.font='8.5px "Courier Prime",monospace';
+  ctx.fillStyle='#aaa';
+  ctx.fillText('Dibuat dengan ♥ dan Gratis  ·  snapcan.photo',W/2,footY+36);
+}},
+
+// ── 17: BOLD EDITORIAL — magazine cover modern bold ───────────
+{name:'BOLD EDITORIAL',W:660,H:1080,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  ctx.fillStyle='#f8f4ef';ctx.fillRect(0,0,W,H);
+
+  // ── FULL-BLEED HERO (photo 1) with color overlay
+  const heroH=420;
+  drawPhoto(ctx,I[0],0,0,W,heroH,0);
+
+  // Color grade overlay — warm film look
+  ctx.save();
+  ctx.globalCompositeOperation='multiply';
+  ctx.fillStyle='rgba(255,210,140,.25)';ctx.fillRect(0,0,W,heroH);
+  ctx.globalCompositeOperation='source-over';
+  // Dark gradient at bottom of hero
+  const hg=ctx.createLinearGradient(0,heroH-120,0,heroH);
+  hg.addColorStop(0,'rgba(248,244,239,0)');hg.addColorStop(1,'rgba(248,244,239,1)');
+  ctx.fillStyle=hg;ctx.fillRect(0,heroH-120,W,120);
+  ctx.restore();
+
+  // ── FLOATING LABELS on hero
+  // Issue tag — top left
+  ctx.fillStyle='#000';ctx.fillRect(0,0,130,32);
+  ctx.font='bold 10px "Courier Prime",monospace';
+  ctx.fillStyle='#fff';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('SNAPCAN  ·  EDISI FOTO',10,16);
+
+  // Date tag — top right
+  const dateStr=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  ctx.fillStyle='#e8c842';ctx.fillRect(W-160,0,160,32);
+  ctx.font='bold 9px "Courier Prime",monospace';
+  ctx.fillStyle='#000';ctx.textAlign='right';ctx.textBaseline='middle';
+  ctx.fillText(dateStr.toUpperCase(),W-10,16);
+
+  // ── BIG HEADLINE overlapping hero→body transition
+  const hlY=heroH-70;
+  ctx.font='900 52px "Playfair Display",serif';
+  ctx.fillStyle='#111';ctx.textAlign='left';ctx.textBaseline='top';
+  // Drop shadow
+  ctx.fillStyle='rgba(0,0,0,.08)';ctx.fillText('SNAP!CAN!',14,hlY+3);
+  ctx.fillStyle='#111';ctx.fillText('SNAP!CAN',12,hlY);
+  ctx.font='900 52px "Playfair Display",serif';
+  // ctx.fillStyle='#e8374a';ctx.fillText('CAN',12,hlY+56);
+
+  // Accent line
+  ctx.fillStyle='#e8374a';ctx.fillRect(12,hlY+116,80,4);
+  ctx.fillStyle='#e8c842';ctx.fillRect(96,hlY+116,40,4);
+  ctx.fillStyle='#111';ctx.fillRect(140,hlY+116,200,4);
+
+  // ── BODY SECTION
+  const bodyY=heroH+70;
+
+  // Sub-headline
+  ctx.font='bold 15px "Playfair Display",serif';
+  ctx.fillStyle='#222';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('4 Frames ,One story',14,bodyY);
+  ctx.font='8.5px "Libre Baskerville",serif';ctx.fillStyle='#666';
+  wrapText(ctx,'Every captured moment becomes a silent witness to a priceless life journey..',14,bodyY+20,W-28,13,bodyY+52);
+
+  // ── 3 SMALL PHOTOS in asymmetric grid
+  const gY=bodyY+60;
+  const gGAP=8,leftW=Math.floor(W*.55)-gGAP,rightW=W-leftW-gGAP-28;
+  const ph2a=170,ph2b=80;
+
+  // Left large photo (photo 2)
+  drawPhoto(ctx,I[1],14,gY,leftW,ph2a,0);
+  ctx.strokeStyle='#ddd';ctx.lineWidth=1;ctx.strokeRect(14,gY,leftW,ph2a);
+  // Color accent bar on left photo
+  ctx.fillStyle='#e8374a';ctx.fillRect(14,gY,4,ph2a);
+
+  // Right top (photo 3)
+  const rx=14+leftW+gGAP;
+  drawPhoto(ctx,I[2],rx,gY,rightW,ph2b,0);
+  ctx.strokeStyle='#ddd';ctx.lineWidth=1;ctx.strokeRect(rx,gY,rightW,ph2b);
+  ctx.fillStyle='#e8c842';ctx.fillRect(rx,gY,4,ph2b);
+
+  // Right bottom (photo 4)
+  const ph2c=ph2a-ph2b-gGAP;
+  drawPhoto(ctx,I[3],rx,gY+ph2b+gGAP,rightW,ph2c,0);
+  ctx.strokeStyle='#ddd';ctx.lineWidth=1;ctx.strokeRect(rx,gY+ph2b+gGAP,rightW,ph2c);
+  ctx.fillStyle='#111';ctx.fillRect(rx,gY+ph2b+gGAP,4,ph2c);
+
+  // Photo number labels
+  [[14,gY,'01','#e8374a'],[rx,gY,'02','#e8c842'],[rx,gY+ph2b+gGAP,'03','#111']].forEach(([x,y,num,c])=>{
+    ctx.fillStyle=c;ctx.fillRect(x+8,y+8,26,16);
+    ctx.font='bold 9px "Courier Prime",monospace';
+    ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(num,x+21,y+16);
+  });
+
+  // ── FOOTER
+  const footY=gY+ph2a+20;
+  ctx.fillStyle='#111';ctx.fillRect(0,footY,W,2);
+  ctx.fillStyle='#e8374a';ctx.fillRect(0,footY+4,60,2);
+  ctx.fillStyle='#e8c842';ctx.fillRect(64,footY+4,30,2);
+
+  ctx.font='bold 11px "Courier Prime",monospace';
+  ctx.fillStyle='#111';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('SNAPCAN PHOTOBOOTH',14,footY+12);
+  ctx.font='9px "Courier Prime",monospace';ctx.fillStyle='#999';
+  ctx.fillText('Dibuat dengan ♥ dan Gratis  ·  snapcan.photo',14,footY+28);
+  ctx.textAlign='right';ctx.fillStyle='#e8374a';
+  ctx.font='bold 18px "Playfair Display",serif';
+  ctx.fillText(new Date().getFullYear(),W-14,footY+14);
+}},
+
+// ── 18: PINK JOURNAL — 6 foto aesthetic pink diary ────────────
+{name:'PINK JOURNAL',W:620,H:1300,photosRequired:6,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}).toUpperCase();
+  const timeStr=now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+
+  // ── BASE: soft pink gradient paper
+  const bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#fff0f5');bg.addColorStop(.4,'#ffe4ef');bg.addColorStop(1,'#ffd6e7');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  // Soft grain
+  ctx.save();
+  for(let i=0;i<W*H*.0015;i++){
+    ctx.globalAlpha=Math.random()*.07;
+    ctx.fillStyle=`hsl(340,${60+Math.random()*20}%,${75+Math.random()*15}%)`;
+    ctx.fillRect(Math.random()*W,Math.random()*H,1.5,1.5);
+  }
+  ctx.globalAlpha=1;ctx.restore();
+
+  // Watercolor blobs background
+  [[W*.15,H*.12,120,'rgba(255,180,210,.18)'],[W*.8,H*.3,90,'rgba(255,150,195,.15)'],
+   [W*.1,H*.7,100,'rgba(255,200,220,.14)'],[W*.9,H*.8,110,'rgba(255,160,200,.16)'],
+   [W*.5,H*.5,140,'rgba(255,220,235,.1)']].forEach(([gx,gy,gr,gc])=>{
+    const wg=ctx.createRadialGradient(gx,gy,0,gx,gy,gr);
+    wg.addColorStop(0,gc);wg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=wg;ctx.fillRect(0,0,W,H);
+  });
+
+  const PAD=20, GAP=10;
+
+  // ── HEADER — handwritten-style title block
+  // Pink ribbon banner
+  ctx.fillStyle='#ff85a1';ctx.fillRect(0,0,W,64);
+  // Diagonal stripes on banner
+  ctx.save();ctx.globalAlpha=.12;
+  for(let x=-H;x<W+H;x+=22){
+    ctx.fillStyle='#fff';ctx.fillRect(x,0,11,64);
+  }
+  ctx.globalAlpha=1;ctx.restore();
+
+  // Heart decorations on banner
+  ['♡','♥','♡'].forEach((h,i)=>{
+    ctx.font='14px serif';ctx.fillStyle=i===1?'#fff':'rgba(255,255,255,.6)';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(h,[PAD+10,W/2,W-PAD-10][i],32);
+  });
+
+  // Main title
+  ctx.font='900 34px "Playfair Display",serif';
+  ctx.fillStyle='rgba(255,255,255,.15)';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('MY JOURNAL',W/2+2,32+2);
+  ctx.fillStyle='#fff';ctx.fillText('MY JOURNAL',W/2,32);
+
+  // Subtitle strip
+  ctx.fillStyle='#ffb3c6';ctx.fillRect(0,64,W,24);
+  ctx.font='bold 9px "Courier Prime",monospace';
+  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('✦  SNAPCAN PINK JOURNAL EDITION  ·  6 SHOTS  ✦',W/2,76);
+
+  // ── DATE TAG
+  ctx.save();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.roundRect(PAD,96,W-PAD*2,32,16);ctx.fill();
+  ctx.strokeStyle='#ffb3c6';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.font='bold 10px "Courier Prime",monospace';
+  ctx.fillStyle='#ff6b9d';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('📅  '+dateStr,PAD+14,112);
+  ctx.textAlign='right';ctx.fillStyle='#ffb3c6';
+  ctx.fillText('🕐 '+timeStr,W-PAD-14,112);
+  ctx.restore();
+
+  // ── PHOTO GRID — creative asymmetric layout
+  const gridY=140;
+
+  // Helper: draw a polaroid-style card
+  function pinkCard(img,x,y,w,h,label,rotation,accent){
+    ctx.save();
+    if(rotation)ctx.transform(1,Math.sin(rotation*Math.PI/180),-Math.sin(rotation*Math.PI/180),1,
+      x+w/2-(x+w/2),y+h/2-(y+h/2)); // simplified tilt
+
+    // Card shadow
+    ctx.fillStyle='rgba(255,105,160,.18)';
+    ctx.beginPath();ctx.roundRect(x+5,y+5,w,h+34,8);ctx.fill();
+
+    // Card body
+    ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.roundRect(x,y,w,h+34,6);ctx.fill();
+
+    // Pink accent top bar
+    ctx.fillStyle=accent||'#ff85a1';
+    ctx.beginPath();ctx.roundRect(x,y,w,6,{upperLeft:6,upperRight:6,lowerLeft:0,lowerRight:0});
+    ctx.fill();
+
+    // Photo
+    ctx.save();
+    ctx.beginPath();ctx.rect(x+4,y+6,w-8,h-2);ctx.clip();
+    if(img)drawPhoto(ctx,img,x+4,y+6,w-8,h-2,0);
+    else{ctx.fillStyle='#ffd6e7';ctx.fillRect(x+4,y+6,w-8,h-2);}
+    ctx.restore();
+
+    // Bottom label area
+    if(label){
+      ctx.font='italic 9px "Courier Prime",monospace';
+      ctx.fillStyle='#ffb3c6';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(label,x+w/2,y+h+17);
+    }
+
+    // Heart stamp
+    ctx.font='11px serif';ctx.fillStyle=accent||'#ff85a1';
+    ctx.textAlign='right';ctx.fillText('♥',x+w-6,y+h+24);
+
+    ctx.restore();
+  }
+
+  // Row 1: 1 wide + 1 narrow
+  const r1h=190,r1w1=Math.floor((W-PAD*2)*0.58),r1w2=W-PAD*2-r1w1-GAP;
+  pinkCard(I[0],PAD,gridY,r1w1,r1h,'momen pertama ♡',0,'#ff6b9d');
+  pinkCard(I[1],PAD+r1w1+GAP,gridY,r1w2,r1h,'so cute! ✨',0,'#ffb3c6');
+
+  // Row 2: 3 equal cards
+  const r2y=gridY+r1h+34+GAP+8;
+  const r2w=Math.floor((W-PAD*2-GAP*2)/3),r2h=155;
+  const r2labels=['besties 💕','laughing 😂','memories ✨'];
+  const r2accents=['#ff85a1','#ff6b9d','#ffc2d4'];
+  for(let i=0;i<3;i++){
+    pinkCard(I[i+2],PAD+i*(r2w+GAP),r2y,r2w,r2h,r2labels[i],0,r2accents[i]);
+  }
+
+  // Row 3: 1 wide + 1 narrow (flipped proportion)
+  const r3y=r2y+r2h+34+GAP+8;
+  const r3w1=Math.floor((W-PAD*2)*0.40),r3w2=W-PAD*2-r3w1-GAP;
+  const r3h=180;
+  pinkCard(I[5],PAD,r3y,r3w1,r3h,'last shot 📷',0,'#ffc2d4');
+  pinkCard(I[4],PAD+r3w1+GAP,r3y,r3w2,r3h,'fav shot 💗',0,'#ff6b9d');
+
+  // ── DOODLE DECORATIONS between rows
+  const doodleY1=r2y-22,doodleY2=r3y-22;
+  ctx.font='12px serif';ctx.textBaseline='middle';
+  [['♡',PAD,doodleY1,'#ffb3c6'],['✦',W/2,doodleY1,'#ffc2d4'],['♡',W-PAD,doodleY1,'#ff85a1'],
+   ['★',PAD+30,doodleY2,'#ffd6e7'],['✿',W/2-20,doodleY2,'#ffb3c6'],['♡',W-PAD-20,doodleY2,'#ff85a1']
+  ].forEach(([s,x,y,c])=>{
+    ctx.fillStyle=c;ctx.textAlign='center';ctx.fillText(s,x,y);
+  });
+
+  // ── FOOTER
+  const footY2=r3y+r3h+34+12;
+  // Wavy bottom strip
+  ctx.fillStyle='#ff85a1';ctx.fillRect(0,footY2,W,46);
+  ctx.fillStyle='#ffb3c6';ctx.fillRect(0,footY2+34,W,12);
+
+  ctx.font='900 15px "Playfair Display",serif';
+  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('✦  Pink Journal by Snapcan  ✦',W/2,footY2+17);
+  ctx.font='8px "Courier Prime",monospace';ctx.fillStyle='rgba(255,255,255,.7)';
+  ctx.fillText('Dibuat dengan ♥ dan Gratis  ·  snapcan.photo',W/2,footY2+30);
+}},
+
+// ── 19: GOLDEN HOUR — 6 foto warm yellow lifestyle ────────────
+{name:'GOLDEN HOUR',W:640,H:1320,photosRequired:6,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase();
+
+  // ── BASE: warm golden gradient
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#fffbea');bg.addColorStop(.3,'#fff8d6');
+  bg.addColorStop(.7,'#fff3c0');bg.addColorStop(1,'#ffecaa');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  // Subtle warm grain
+  ctx.save();
+  for(let i=0;i<W*H*.0015;i++){
+    ctx.globalAlpha=Math.random()*.06;
+    ctx.fillStyle=`hsl(${45+Math.random()*20},${70+Math.random()*20}%,${70+Math.random()*20}%)`;
+    ctx.fillRect(Math.random()*W,Math.random()*H,1.5,1.5);
+  }
+  ctx.globalAlpha=1;ctx.restore();
+
+  // Sun burst from top-right
+  const sun=ctx.createRadialGradient(W*.85,0,0,W*.85,0,H*.6);
+  sun.addColorStop(0,'rgba(255,220,80,.22)');sun.addColorStop(.5,'rgba(255,190,40,.08)');
+  sun.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=sun;ctx.fillRect(0,0,W,H);
+
+  const PAD=18, GAP=9;
+
+  // ── HEADER — bold black on gold
+  ctx.fillStyle='#1a1208';ctx.fillRect(0,0,W,70);
+
+  // Golden accent lines
+  ctx.fillStyle='#f5c518';ctx.fillRect(0,0,W,5);
+  ctx.fillStyle='#e8a800';ctx.fillRect(0,65,W,5);
+
+  // Logo area
+  ctx.font='900 11px "Courier Prime",monospace';
+  ctx.fillStyle='#f5c518';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('SNAPCAN',PAD,22);
+  ctx.font='7px "Courier Prime",monospace';ctx.fillStyle='rgba(245,197,24,.6)';
+  ctx.fillText('PHOTOBOOTH',PAD,34);
+
+  // Main title
+  ctx.font='900 38px "Playfair Display",serif';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  // Gold gradient text
+  const tg=ctx.createLinearGradient(0,0,W,0);
+  tg.addColorStop(0,'#f5c518');tg.addColorStop(.5,'#fff7d0');tg.addColorStop(1,'#e8a800');
+  ctx.fillStyle=tg;
+  ctx.fillText('GOLDEN HOUR',W/2,37);
+
+  // Right side: edition
+  ctx.font='bold 8px "Courier Prime",monospace';
+  ctx.fillStyle='rgba(245,197,24,.7)';ctx.textAlign='right';
+  ctx.fillText('6 SHOTS',W-PAD,20);ctx.fillText('EDITION',W-PAD,30);
+
+  // ── DATE BAR
+  ctx.fillStyle='#f5c518';ctx.fillRect(0,70,W,28);
+  ctx.font='bold 9px "Courier Prime",monospace';
+  ctx.fillStyle='#1a1208';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('☀  '+dateStr+'  ☀',W/2,84);
+
+  // ── LAYOUT: film strip aesthetic
+  const gridY=108;
+
+  // Helper: draw film-strip frame
+  function filmFrame(img,x,y,w,h,label,accent){
+    // Frame shadow
+    ctx.fillStyle='rgba(180,130,0,.15)';
+    ctx.fillRect(x+4,y+4,w,h);
+
+    // Black film border
+    ctx.fillStyle='#1a1208';ctx.fillRect(x-6,y-6,w+12,h+12);
+
+    // Film holes top
+    for(let hx=x+4;hx<x+w-4;hx+=16){
+      ctx.fillStyle='#f5c518';
+      ctx.beginPath();ctx.roundRect(hx,y-4,8,6,3);ctx.fill();
+    }
+    // Film holes bottom
+    for(let hx=x+4;hx<x+w-4;hx+=16){
+      ctx.fillStyle='#f5c518';
+      ctx.beginPath();ctx.roundRect(hx,y+h-2,8,6,3);ctx.fill();
+    }
+
+    // Photo
+    if(img)drawPhoto(ctx,img,x,y,w,h,0);
+    else{ctx.fillStyle='#fff8d6';ctx.fillRect(x,y,w,h);}
+
+    // Warm color grade
+    ctx.save();ctx.globalCompositeOperation='multiply';
+    ctx.fillStyle='rgba(255,210,100,.18)';ctx.fillRect(x,y,w,h);
+    ctx.globalCompositeOperation='source-over';ctx.restore();
+
+    // Accent corner ribbon
+    ctx.fillStyle=accent||'#f5c518';
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+28,y);ctx.lineTo(x,y+28);ctx.closePath();ctx.fill();
+
+    // Label tag below frame
+    if(label){
+      ctx.fillStyle='#1a1208';
+      ctx.beginPath();ctx.roundRect(x+w/2-45,y+h+9,90,20,10);ctx.fill();
+      ctx.font='bold 8px "Courier Prime",monospace';
+      ctx.fillStyle='#f5c518';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(label,x+w/2,y+h+19);
+    }
+  }
+
+  // Row 1: 2 equal landscape frames
+  const r1w=Math.floor((W-PAD*2-GAP)/2), r1h=175;
+  filmFrame(I[0],PAD,gridY,r1w,r1h,'SHOT 01','#f5c518');
+  filmFrame(I[1],PAD+r1w+GAP,gridY,r1w,r1h,'SHOT 02','#e8a800');
+
+  // Row 2: 1 tall dominant frame (hero shot)
+  const r2y=gridY+r1h+34+GAP+10;
+  const heroW=W-PAD*2, heroH=240;
+  filmFrame(I[2],PAD,r2y,heroW,heroH,'✦  GOLDEN MOMENT  ✦','#f5c518');
+
+  // "GOLDEN HOUR" text watermark on hero
+  ctx.save();ctx.globalAlpha=.12;
+  ctx.font='900 42px "Playfair Display",serif';
+  ctx.fillStyle='#f5c518';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('GOLDEN HOUR',W/2,r2y+heroH/2);
+  ctx.restore();
+
+  // Row 3: 3 equal square frames
+  const r3y=r2y+heroH+34+GAP+10;
+  const r3w=Math.floor((W-PAD*2-GAP*2)/3), r3h=150;
+  const r3labels=['SHOT 04','SHOT 05','SHOT 06'];
+  const r3accents=['#f5c518','#e8a800','#ffd740'];
+  for(let i=0;i<3;i++){
+    filmFrame(I[i+3],PAD+i*(r3w+GAP),r3y,r3w,r3h,r3labels[i],r3accents[i]);
+  }
+
+  // ── DIVIDER + QUOTE
+  const qY=r3y+r3h+40;
+  ctx.fillStyle='#1a1208';ctx.fillRect(PAD,qY,W-PAD*2,2);
+  ctx.fillStyle='#f5c518';ctx.fillRect(PAD,qY+4,W-PAD*2,1);
+
+  ctx.font='italic 13px "Playfair Display",serif';
+  ctx.fillStyle='#8b6914';ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('"Use snapcan for best experience"',W/2,qY+12);
+
+  // Author line
+  ctx.font='8px "Courier Prime",monospace';ctx.fillStyle='#c8a020';
+  ctx.fillText('— Snapcan Golden Hour Edition',W/2,qY+30);
+
+  // ── FOOTER — full black bar
+  const footY=qY+50;
+  ctx.fillStyle='#1a1208';ctx.fillRect(0,footY,W,H-footY);
+  ctx.fillStyle='#f5c518';ctx.fillRect(0,footY,W,4);
+
+  // Film counter strip
+  ctx.fillStyle='rgba(245,197,24,.1)';
+  for(let x=0;x<W;x+=32){
+    ctx.fillRect(x,footY+8,20,H-footY-8);
+  }
+
+  ctx.font='900 22px "Playfair Display",serif';
+  const fg=ctx.createLinearGradient(0,0,W,0);
+  fg.addColorStop(0,'#f5c518');fg.addColorStop(.5,'#fff7d0');fg.addColorStop(1,'#e8a800');
+  ctx.fillStyle=fg;ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText('GOLDEN HOUR  ✦  SNAPCAN',W/2,footY+12);
+
+  ctx.font='8.5px "Courier Prime",monospace';ctx.fillStyle='rgba(245,197,24,.6)';
+  ctx.fillText('Dibuat dengan ♥ dan Gratis  ·  snapcan.photo',W/2,footY+40);
+
+  // Film frame numbers decoration
+  ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='rgba(245,197,24,.4)';
+  ctx.textAlign='left';
+  for(let i=1;i<=6;i++){ctx.fillText(String(i).padStart(2,'0'),PAD+(i-1)*98,footY+60);}
+}},
+
+// ── 20: BLUE AESTHETIC — indie blue strip with quotes ─────────
+{name:'BLUE AESTHETIC',W:420,H:1180,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // ── WHITE CARD background
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);
+
+  // Subtle drop shadow feel — very light grey border
+  ctx.strokeStyle='#e0e0e8';ctx.lineWidth=1;ctx.strokeRect(1,1,W-2,H-2);
+
+  const PAD=18, GAP=10;
+  const PW=W-PAD*2;  // photo width
+
+  // ── helper: draw one blue-textured photo block
+  function bluePhoto(img,x,y,w,h){
+    // Blue grunge bg when no photo
+    if(!img){
+      // Dark blue base
+      ctx.fillStyle='#1a2a4a';ctx.fillRect(x,y,w,h);
+      // Textured overlay — blue watercolor
+      const g1=ctx.createRadialGradient(x+w*.3,y+h*.4,0,x+w*.3,y+h*.4,w*.7);
+      g1.addColorStop(0,'rgba(60,100,200,.4)');g1.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g1;ctx.fillRect(x,y,w,h);
+      const g2=ctx.createRadialGradient(x+w*.7,y+h*.6,0,x+w*.7,y+h*.6,w*.5);
+      g2.addColorStop(0,'rgba(20,80,160,.35)');g2.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g2;ctx.fillRect(x,y,w,h);
+      // grain
+      ctx.save();
+      for(let i=0;i<w*h*.004;i++){
+        ctx.globalAlpha=Math.random()*.12;
+        ctx.fillStyle=`rgba(${40+Math.random()*60},${80+Math.random()*80},${160+Math.random()*80},1)`;
+        ctx.fillRect(x+Math.random()*w,y+Math.random()*h,Math.random()*3+.5,Math.random()*3+.5);
+      }
+      ctx.globalAlpha=1;ctx.restore();
+    } else {
+      drawPhoto(ctx,img,x,y,w,h,0);
+      // Blue color grade overlay
+      ctx.save();ctx.globalCompositeOperation='multiply';
+      ctx.fillStyle='rgba(40,80,180,.3)';ctx.fillRect(x,y,w,h);
+      ctx.globalCompositeOperation='source-over';ctx.restore();
+    }
+    // Blue glowing border
+    ctx.save();
+    ctx.shadowColor='rgba(80,120,255,.6)';ctx.shadowBlur=8;
+    ctx.strokeStyle='rgba(140,160,255,.9)';ctx.lineWidth=2;
+    ctx.strokeRect(x,y,w,h);
+    ctx.restore();
+  }
+
+  // ── helper: draw quote strip between photos
+  function quoteStrip(quote,y,h,deco){
+    // Background strip
+    ctx.fillStyle='rgba(240,244,255,.9)';ctx.fillRect(0,y,W,h);
+    // Left white line accent
+    ctx.fillStyle='rgba(140,160,255,.5)';ctx.fillRect(PAD,y+h*.2,2,h*.6);
+    // Quote text
+    ctx.font='italic 11px "Courier Prime",monospace';
+    ctx.fillStyle='#2a3a6a';ctx.textAlign='left';ctx.textBaseline='top';
+    // Split quote at comma or newline
+    const lines=quote.split('\n');
+    lines.forEach((l,i)=>ctx.fillText(l,PAD+10,y+h*.18+i*14));
+    // Decoration right side
+    if(deco==='spiral'){
+      // Draw spiral
+      ctx.save();ctx.strokeStyle='rgba(140,160,255,.8)';ctx.lineWidth=1.5;
+      const cx=W-PAD-18,cy=y+h/2;
+      ctx.beginPath();
+      for(let a=0;a<Math.PI*6;a+=0.15){
+        const r=a*2.2;
+        const px2=cx+Math.cos(a)*r,py2=cy+Math.sin(a)*r;
+        if(a===0)ctx.moveTo(px2,py2);else ctx.lineTo(px2,py2);
+      }
+      ctx.stroke();ctx.restore();
+    } else if(deco==='stars'){
+      ctx.font='13px serif';ctx.fillStyle='rgba(140,160,255,.7)';ctx.textAlign='center';
+      ['✦','✧','✦'].forEach((s,i)=>{ctx.fillText(s,W-PAD-30+i*14,y+h*.2+i*8);});
+    } else if(deco==='asterisk'){
+      ctx.font='16px serif';ctx.fillStyle='rgba(140,160,255,.6)';ctx.textAlign='center';
+      ctx.fillText('✳',W-PAD-14,y+h*.15);
+      ctx.font='12px serif';ctx.fillText('✦',W-PAD-28,y+h*.55);
+      ctx.font='10px serif';ctx.fillText('✧',W-PAD-8,y+h*.65);
+    }
+  }
+
+  // ── LAYOUT — 4 photos with quotes between
+  let curY=PAD;
+  const ph=Math.floor((H-PAD*2-GAP*3-38*3)/4); // photo height
+
+  // Photo 1
+  bluePhoto(I[0],PAD,curY,PW,ph);curY+=ph+GAP;
+  // Quote 1
+  quoteStrip('I still remember,\nI will forever',curY,38,'spiral');curY+=38+GAP;
+  // Photo 2
+  bluePhoto(I[1],PAD,curY,PW,ph);curY+=ph+GAP;
+  // Quote 2
+  quoteStrip('Backseat secrets,\nwe won\'t ever tell,',curY,38,'stars');curY+=38+GAP;
+  // Photo 3
+  bluePhoto(I[2],PAD,curY,PW,ph);curY+=ph+GAP;
+  // Quote 3
+  quoteStrip('I miss you double XL',curY,38,'asterisk');curY+=38+GAP;
+  // Photo 4
+  bluePhoto(I[3],PAD,curY,PW,ph);curY+=ph+GAP;
+
+  // ── FOOTER — SNAPCAN PHOTOBOOTH style
+  const footY=curY+4;
+  // Bold brand name
+  ctx.font='900 16px "Playfair Display",serif';
+  ctx.fillStyle='#1a3a8a';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('SNAPCAN',PAD,footY);
+  ctx.font='bold 8px "Courier Prime",monospace';ctx.fillStyle='#5a6a9a';
+  ctx.fillText('PHOTOBOOTH',PAD,footY+18);
+
+  // XXL badge
+  ctx.font='900 28px "Playfair Display",serif';
+  ctx.save();
+  ctx.strokeStyle='rgba(100,130,255,.6)';ctx.lineWidth=2;
+  ctx.strokeText('XXL',W-PAD-52,footY-4);
+  ctx.fillStyle='rgba(100,130,255,.5)';ctx.fillText('XXL',W-PAD-52,footY-4);
+  ctx.restore();
+}},
+
+// ── 21: CUTE FROG — kawaii green checkerboard 4 foto ──────────
+{name:'CUTE FROG',W:480,H:1200,photosRequired:4,
+async render(ctx,I){
+  const W=this.W,H=this.H;
+
+  // ── BACKGROUND: green & cream checkerboard
+  const SQ=60; // checker square size
+  for(let row=0;row<Math.ceil(H/SQ);row++){
+    for(let col=0;col<Math.ceil(W/SQ);col++){
+      ctx.fillStyle=(row+col)%2===0?'#ffffff':'#6abf4b';
+      ctx.fillRect(col*SQ,row*SQ,SQ,SQ);
+    }
+  }
+
+  // Organic green blob overlays (like reference)
+  [[W*.1,H*.08,90,'rgba(80,170,50,.25)'],[W*.9,H*.25,70,'rgba(60,160,40,.2)'],
+   [W*.05,H*.55,80,'rgba(90,180,55,.22)'],[W*.88,H*.7,60,'rgba(70,165,45,.2)'],
+   [W*.15,H*.9,75,'rgba(85,175,50,.23)']].forEach(([gx,gy,gr,gc])=>{
+    const g=ctx.createRadialGradient(gx,gy,0,gx,gy,gr);
+    g.addColorStop(0,gc);g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  });
+
+  // Diagonal green stripe (like reference)
+  ctx.save();ctx.globalAlpha=.18;ctx.fillStyle='#4aaa2a';
+  ctx.beginPath();
+  ctx.moveTo(W*.3,0);ctx.lineTo(W*.65,0);ctx.lineTo(W*.35,H);ctx.lineTo(0,H);ctx.closePath();ctx.fill();
+  ctx.globalAlpha=1;ctx.restore();
+
+  const PAD=28, GAP=14;
+  const PW=W-PAD*2-14, ph=Math.floor((H-PAD*2-GAP*3-80)/4);
+
+  // ── helper: draw a cute frog emoji using canvas shapes
+  function drawFrog(x,y,size,variant){
+    ctx.save();
+    const s=size;
+    // Body — round green
+    ctx.fillStyle='#6abf4b';
+    ctx.beginPath();ctx.arc(x,y+s*.1,s*.55,0,Math.PI*2);ctx.fill();
+    // Belly — lighter
+    ctx.fillStyle='#9de07a';
+    ctx.beginPath();ctx.ellipse(x,y+s*.2,s*.35,s*.3,0,0,Math.PI*2);ctx.fill();
+    // Eyes — two bumps on top
+    ctx.fillStyle='#6abf4b';
+    ctx.beginPath();ctx.arc(x-s*.22,y-s*.32,s*.22,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(x+s*.22,y-s*.32,s*.22,0,Math.PI*2);ctx.fill();
+    // Eye whites
+    ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.arc(x-s*.22,y-s*.32,s*.14,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(x+s*.22,y-s*.32,s*.14,0,Math.PI*2);ctx.fill();
+    // Pupils
+    ctx.fillStyle='#222';
+    ctx.beginPath();ctx.arc(x-s*.2,y-s*.3,s*.07,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(x+s*.2,y-s*.3,s*.07,0,Math.PI*2);ctx.fill();
+    // Rosy cheeks
+    ctx.fillStyle='rgba(255,150,160,.5)';
+    ctx.beginPath();ctx.ellipse(x-s*.3,y+s*.05,s*.12,s*.08,0,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(x+s*.3,y+s*.05,s*.12,s*.08,0,0,Math.PI*2);ctx.fill();
+    // Smile
+    ctx.strokeStyle='#3a8a22';ctx.lineWidth=s*.05;
+    ctx.beginPath();ctx.arc(x,y+s*.1,s*.2,0.2,Math.PI-.2);ctx.stroke();
+    // Crown for variant 2
+    if(variant===2){
+      ctx.fillStyle='#f5c518';
+      ctx.beginPath();ctx.moveTo(x-s*.2,y-s*.52);ctx.lineTo(x-s*.28,y-s*.72);ctx.lineTo(x,y-s*.58);
+      ctx.lineTo(x+s*.28,y-s*.72);ctx.lineTo(x+s*.2,y-s*.52);ctx.closePath();ctx.fill();
+    }
+    // Wings for variant 3
+    if(variant===3){
+      ctx.fillStyle='rgba(150,220,255,.7)';
+      ctx.beginPath();ctx.ellipse(x-s*.5,y-s*.1,s*.25,s*.15,-0.5,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.ellipse(x+s*.5,y-s*.1,s*.25,s*.15,0.5,0,Math.PI*2);ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ── helper: draw a small leaf
+  function drawLeaf(x,y,size,angle){
+    ctx.save();ctx.translate(x,y);ctx.rotate(angle);
+    ctx.fillStyle='#5ab535';
+    ctx.beginPath();ctx.ellipse(0,-size*.5,size*.3,size*.55,0,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#3a8a22';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-size);ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── PHOTO FRAMES — white with green border, slightly offset
+  const offsets=[-6,6,-4,5]; // alternating slight x offset for playful feel
+  let curY=PAD;
+  for(let i=0;i<4;i++){
+    const px=PAD+7+offsets[i];
+    // Drop shadow
+    ctx.fillStyle='rgba(50,130,30,.2)';
+    ctx.fillRect(px+5,curY+5,PW,ph);
+    // White card
+    ctx.fillStyle='#fff';ctx.fillRect(px,curY,PW,ph);
+    // Photo
+    drawPhoto(ctx,I[i],px+4,curY+4,PW-8,ph-8,.04);
+    // Green border
+    ctx.strokeStyle='#4aaa2a';ctx.lineWidth=3;ctx.strokeRect(px,curY,PW,ph);
+    // Corner dots
+    [[px,curY],[px+PW,curY],[px,curY+ph],[px+PW,curY+ph]].forEach(([cx2,cy2])=>{
+      ctx.fillStyle='#4aaa2a';ctx.beginPath();ctx.arc(cx2,cy2,4,0,Math.PI*2);ctx.fill();
+    });
+    curY+=ph+GAP;
+  }
+
+  // ── FROG DECORATIONS placed around the strip
+
+  // Top: row of tiny frogs peeking
+  for(let i=0;i<5;i++){
+    drawFrog(PAD+30+i*58,PAD-18,16,1);
+  }
+  // One frog peeking right top corner
+  drawFrog(W-20,PAD-12,20,1);
+
+  // Between photo 1 and 2: face frog + sparkle stars
+  const gap1Y=PAD+ph+GAP/2;
+  drawFrog(PAD-8,gap1Y,22,1); // left side
+  ctx.font='13px serif';ctx.fillStyle='#f5c518';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('✦ ✧',PAD+4,gap1Y);
+  drawLeaf(W-PAD+2,gap1Y-8,20,-0.4);
+
+  // Between photo 2 and 3: crowned frog + wings frog
+  const gap2Y=PAD+ph*2+GAP*1.5+GAP;
+  drawFrog(PAD-12,gap2Y,28,3); // winged frog left
+  drawFrog(PAD+26,gap2Y-6,22,2); // crowned frog
+  // Green hand/paw right side
+  ctx.font='22px serif';ctx.fillStyle='#6abf4b';ctx.textAlign='right';
+  ctx.fillText('🐸',W-PAD+8,gap2Y);
+
+  // Between photo 3 and 4: plant decoration left
+  const gap3Y=PAD+ph*3+GAP*2.5+GAP*2;
+  drawLeaf(PAD-10,gap3Y,28,0.3);
+  drawLeaf(PAD+4,gap3Y+10,22,0.1);
+  // Yellow berry plant
+  ctx.font='18px serif';ctx.fillStyle='#f5c518';
+  ctx.textAlign='left';ctx.fillText('✿',PAD-14,gap3Y+30);
+
+  // Bottom right: big sitting frog
+  drawFrog(W-PAD-10,H-PAD-18,36,1);
+
+  // ── SMALL DECORATIVE PLANTS (right side vertical)
+  [H*.25,H*.45,H*.65].forEach((plantY,i)=>{
+    drawLeaf(W-PAD+8,plantY,18+i*4,-.3+i*.2);
+  });
+
+  // ── FOOTER TEXT
+  ctx.font='bold 10px "Courier Prime",monospace';
+  ctx.fillStyle='#3a7a1a';ctx.textAlign='left';ctx.textBaseline='bottom';
+  ctx.fillText('🐸  SNAPCAN  ·  CUTE FROG EDITION',PAD+8,H-8);
+  ctx.font='8px "Courier Prime",monospace';ctx.fillStyle='rgba(60,120,30,.6)';
+  ctx.textAlign='right';
+  ctx.fillText(new Date().toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}),W-PAD,H-8);
+}},
+
+];
+
+// ══════════════════════════════════════════════════════════════
+// PREVIEW ENGINE
+// ══════════════════════════════════════════════════════════════
+async function updatePreview(fast=false){
+  clearTimeout(previewTimer);
+  previewTimer=setTimeout(async()=>{
+    const sp=document.getElementById('spinner-wrap');
+    sp.classList.add('show');
+    try{
+      const L=LAYOUTS[selLayout];
+      const pc=document.getElementById('preview-canvas');
+      const stageW=document.getElementById('preview-stage').clientWidth||360;
+      const maxW=Math.min(340,stageW-20);
+      const sc=maxW/L.W;
+      // Always reset canvas dimensions — this also clears all transforms
+      pc.width=Math.round(L.W*sc);
+      pc.height=Math.round(L.H*sc);
+      pc.style.opacity='0';
+      // Get fresh context AFTER resize (resize resets ctx state)
+      const ctx=pc.getContext('2d');
+      ctx.setTransform(1,0,0,1,0,0); // ensure identity matrix
+      ctx.scale(sc,sc);
+      // ensure photos loaded as Image objects
+      for(let i=0;i<6;i++){
+        if(photos[i]&&!previewImgs[i]){
+          try{previewImgs[i]=await loadImg(photos[i]);}catch(e){previewImgs[i]=null;}
+        } else if(!photos[i]){
+          previewImgs[i]=null;
+        }
+      }
+      // Reset any leftover canvas state before rendering
+      ctx.globalAlpha=1;
+      ctx.globalCompositeOperation='source-over';
+      ctx.shadowBlur=0;
+      ctx.shadowColor='transparent';
+      await L.render(ctx,previewImgs,getO());
+      // Reset state again after render in case it leaked
+      ctx.globalAlpha=1;
+      ctx.globalCompositeOperation='source-over';
+      pc.style.transition='opacity .3s';
+      pc.style.opacity='1';
+      document.getElementById('preview-layout-name').textContent=L.name;
+      document.getElementById('preview-name-badge').textContent=L.name;
+      const need=L.photosRequired||4;
+      const taken=photos.slice(0,need).filter(Boolean).length;
+      document.getElementById('preview-badge').textContent=taken<need?'PRATINJAU':'✦ SIAP CETAK';
+      const done=taken>=need;
+      ['btn-dl','btn-zoom','btn-shr','mbtn-dl'].forEach(id=>{
+        const el=document.getElementById(id);if(el)el.disabled=!done;
+      });
+    }catch(e){
+      console.error('Preview error:',e);
+      // show error visually so it's not just black
+      const pc=document.getElementById('preview-canvas');
+      if(pc){
+        const ctx=pc.getContext('2d');
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.fillStyle='#f5f0e8';ctx.fillRect(0,0,pc.width,pc.height);
+        ctx.fillStyle='#8b1a1a';ctx.font='12px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText('Preview error — coba pilih layout lain',pc.width/2,pc.height/2);
+        pc.style.opacity='1';
+      }
+    }
+    sp.classList.remove('show');
+  },fast?60:200);
+}
+
+// ══════════════════════════════════════════════════════════════
+// LAYOUT THUMBNAILS
+// ══════════════════════════════════════════════════════════════
+function renderThumbs(){
+  const g=document.getElementById('layout-grid');g.innerHTML='';
+  LAYOUTS.forEach((L,i)=>{
+    const wrap=document.createElement('div');
+    wrap.className='layout-thumb'+(i===selLayout?' sel':'');
+    wrap.setAttribute('title',L.name);
+    wrap.onclick=()=>{
+      selLayout=i;
+      document.querySelectorAll('.layout-thumb').forEach((el,j)=>el.classList.toggle('sel',j===i));
+      // Reset curSlot if it's beyond what's needed
+      const need=L.photosRequired||4;
+      if(curSlot>=need)curSlot=0;
+      renderSlots();
+      updatePreview(true);
+      setStatus('Layout "'+L.name+'" dipilih'+(need<4?' — butuh '+need+' foto':''));
+    };
+    const c=document.createElement('canvas');
+    const sc=.16;c.width=Math.round(L.W*sc);c.height=Math.round(L.H*sc);
+    c.style.cssText='width:100%;height:100%;display:block';
+    const ctx=c.getContext('2d');
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.scale(sc,sc);
+    L.render(ctx,[null,null,null,null],{hl:'JUDUL UTAMA',sub:'Sub keterangan',cap:'Keterangan foto',ed:'No.1',pn:'Snapcan',date:dateStr,dateF:dateFullStr}).catch(()=>{});
+    const dot=document.createElement('div');dot.className='layout-sel-dot';
+    const lbl=document.createElement('div');lbl.className='layout-lbl';lbl.textContent=L.name;
+    wrap.appendChild(c);wrap.appendChild(dot);wrap.appendChild(lbl);
+    g.appendChild(wrap);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// SLOTS
+// ══════════════════════════════════════════════════════════════
+function renderSlots(){
+  const need=LAYOUTS[selLayout].photosRequired||4;
+  const row=document.getElementById('slot-row');row.innerHTML='';
+  photos.forEach((img,i)=>{
+    const notNeeded=i>=need;
+    const s=document.createElement('div');
+    s.className='slot'+(i===curSlot&&!notNeeded?' active':'');
+    s.style.opacity=notNeeded?'0.28':'1';
+    s.style.cursor=notNeeded?'default':'pointer';
+    s.onclick=()=>{if(!notNeeded){curSlot=i;renderSlots();}};
+    if(img){
+      const el=document.createElement('img');el.src=img;s.appendChild(el);
+      const ck=document.createElement('div');ck.className='slot-check';ck.innerHTML='<svg width="8" height="6" viewBox="0 0 8 6"><path d="M1 3l2 2 4-4" stroke="#fff" stroke-width="1.5" fill="none"/></svg>';s.appendChild(ck);
+    } else {
+      s.innerHTML=`<div class="slot-empty-inner"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="16" rx="2" stroke="#c8b99a" stroke-width="1.3"/><circle cx="8" cy="10" r="2.5" stroke="#c8b99a" stroke-width="1.3"/><path d="M3 20l5-5 4 3.5 3-3 5 4.5" stroke="#c8b99a" stroke-width="1.3" stroke-linejoin="round"/></svg></div>`;
+    }
+    const lbl=document.createElement('div');lbl.className='slot-num';
+    lbl.textContent=notNeeded?'—':i+1;
+    s.appendChild(lbl);
+    row.appendChild(s);
+  });
+  const taken=photos.slice(0,need).filter(Boolean).length;
+  document.getElementById('slot-ind').textContent=Math.min(curSlot+1,need);
+  document.getElementById('slots-badge').textContent=taken+'/'+need;
+  document.getElementById('slots-status').textContent=
+    taken===0?'Belum ada foto':
+    taken<need?taken+' foto diambil (butuh '+need+')':
+    '✦ Semua foto siap!';
+  document.getElementById('slots-status').style.color=taken>=need?'var(--gold)':'var(--red)';
+  document.getElementById('btn-ret').disabled=!photos[curSlot]||curSlot>=need;
+  for(let i=0;i<6;i++){
+    const d=document.getElementById('hd'+i);
+    if(!d)continue;
+    if(i>=need){d.classList.remove('taken','active');d.style.opacity='.18';}
+    else{d.style.opacity='1';d.classList.toggle('taken',!!photos[i]);d.classList.toggle('active',i===curSlot&&!photos[i]);}
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// INPUT LISTENERS
+// ══════════════════════════════════════════════════════════════
+['inp-papername','inp-hl','inp-sub','inp-cap','inp-ed'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',()=>updatePreview());
+});
+
+// ══════════════════════════════════════════════════════════════
+// CAMERA
+// ══════════════════════════════════════════════════════════════
+async function startCam(){
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:960}},audio:false});
+    document.getElementById('video').srcObject=stream;
+    camReady=true;
+    document.getElementById('btn-cam').textContent='✓ Kamera';
+    document.getElementById('btn-cam').disabled=true;
+    document.getElementById('btn-cap').disabled=false;
+    if(document.getElementById('mbtn-cam')){document.getElementById('mbtn-cam').textContent='✓ ON';document.getElementById('mbtn-cam').disabled=true;}
+    if(document.getElementById('mbtn-cap'))document.getElementById('mbtn-cap').disabled=false;
+    document.getElementById('cam-badge').textContent='LIVE';
+    document.getElementById('status-dot').classList.add('active');
+    setStatus('Kamera aktif — posisikan diri & tekan Foto');
+  }catch(e){
+    setStatus('ERROR kamera: buka file langsung di browser');
+  }
+}
+
+function doCapture(){
+  if(!camReady)return;
+  const t=parseInt(document.getElementById('timer-sel').value);
+  t>0?countdown(t):snap();
+}
+
+function countdown(sec){
+  let n=sec;
+  const cw=document.getElementById('cdown-wrap'),cn=document.getElementById('cdown-num');
+  cw.style.display='flex';cn.textContent=n;
+  document.getElementById('btn-cap').disabled=true;
+  if(document.getElementById('mbtn-cap'))document.getElementById('mbtn-cap').disabled=true;
+  setStatus(`Berpose! ${n}...`);
+  playBeep(false);
+  const id=setInterval(()=>{
+    n--;
+    if(n<=0){
+      playBeep(true);
+      clearInterval(id);cw.style.display='none';
+      setTimeout(()=>snap(),80);
+      document.getElementById('btn-cap').disabled=false;
+      if(document.getElementById('mbtn-cap'))document.getElementById('mbtn-cap').disabled=false;
+    } else {
+      playBeep(n===1);
+      cn.style.animation='none';void cn.offsetWidth;cn.style.animation='popnum 1s ease';
+      cn.textContent=n;setStatus(`Berpose! ${n}...`);
+    }
+  },1000);
+}
+
+// ── COUNTDOWN BEEP SOUND ──────────────────────────────────────
+function playBeep(isFinal=false){
+  try{
+    const ac=new(window.AudioContext||window.webkitAudioContext)();
+    const now=ac.currentTime;
+    if(isFinal){
+      // Triple ascending pulse — loud, punchy, unmistakable
+      [0,0.13,0.26].forEach((delay,i)=>{
+        const osc=ac.createOscillator();
+        const gain=ac.createGain();
+        osc.type='square';
+        osc.frequency.value=700+i*200; // 700→900→1100 Hz ascending
+        gain.gain.setValueAtTime(0,now+delay);
+        gain.gain.linearRampToValueAtTime(0.9,now+delay+0.012);
+        gain.gain.exponentialRampToValueAtTime(0.001,now+delay+0.22);
+        osc.connect(gain);gain.connect(ac.destination);
+        osc.start(now+delay);osc.stop(now+delay+0.22);
+      });
+    } else {
+      // Regular tick — square wave, noticeably loud single beep
+      const osc=ac.createOscillator();
+      const gain=ac.createGain();
+      osc.type='square';
+      osc.frequency.value=620;
+      gain.gain.setValueAtTime(0,now);
+      gain.gain.linearRampToValueAtTime(0.75,now+0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001,now+0.15);
+      osc.connect(gain);gain.connect(ac.destination);
+      osc.start(now);osc.stop(now+0.15);
+    }
+  }catch(e){}
+}
+
+// ── CAMERA SHUTTER SOUND ──────────────────────────────────────
+// Layered DSLR-style: sharp click + mirror slap thud + shutter close
+function playShutter(){
+  try{
+    const ac=new(window.AudioContext||window.webkitAudioContext)();
+    const sr=ac.sampleRate;
+    const now=ac.currentTime;
+
+    // Layer 1: Sharp mechanical CLICK (shutter open) — instant
+    {
+      const len=Math.floor(sr*0.07);
+      const buf=ac.createBuffer(1,len,sr);
+      const d=buf.getChannelData(0);
+      for(let i=0;i<len;i++){
+        const t=i/len;
+        const impulse=i<5?(1-i/5)*0.95:0;
+        const noise=(Math.random()*2-1)*Math.exp(-t*55)*0.6;
+        d[i]=impulse+noise;
+      }
+      const src=ac.createBufferSource();src.buffer=buf;
+      const bp=ac.createBiquadFilter();bp.type='bandpass';bp.frequency.value=3500;bp.Q.value=0.7;
+      const g=ac.createGain();g.gain.value=3.5;
+      src.connect(bp);bp.connect(g);g.connect(ac.destination);
+      src.start(now);
+    }
+
+    // Layer 2: Mid-frequency CLACK body (mirror slap) — 18ms later
+    {
+      const len=Math.floor(sr*0.12);
+      const buf=ac.createBuffer(1,len,sr);
+      const d=buf.getChannelData(0);
+      for(let i=0;i<len;i++){
+        const t=i/len;
+        const tone=Math.sin(2*Math.PI*180*t)*Math.exp(-t*28)*0.7;
+        const noise=(Math.random()*2-1)*Math.exp(-t*45)*0.4;
+        d[i]=tone+noise;
+      }
+      const src=ac.createBufferSource();src.buffer=buf;
+      const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2500;
+      const g=ac.createGain();g.gain.value=2.8;
+      src.connect(lp);lp.connect(g);g.connect(ac.destination);
+      src.start(now+0.018);
+    }
+
+    // Layer 3: Short tail noise (shutter close) — 80ms later
+    {
+      const len=Math.floor(sr*0.055);
+      const buf=ac.createBuffer(1,len,sr);
+      const d=buf.getChannelData(0);
+      for(let i=0;i<len;i++){
+        const t=i/len;
+        d[i]=(Math.random()*2-1)*Math.exp(-t*70)*0.35;
+      }
+      const src=ac.createBufferSource();src.buffer=buf;
+      const hp=ac.createBiquadFilter();hp.type='highpass';hp.frequency.value=1200;
+      const g=ac.createGain();g.gain.value=2.2;
+      src.connect(hp);hp.connect(g);g.connect(ac.destination);
+      src.start(now+0.08);
+    }
+
+  }catch(e){}
+}
+
+
+function snap(){
+  const vid=document.getElementById('video'),wc=document.getElementById('wc');
+  wc.width=vid.videoWidth||640;wc.height=vid.videoHeight||480;
+  const ctx=wc.getContext('2d');
+  ctx.translate(wc.width,0);ctx.scale(-1,1);ctx.drawImage(vid,0,0);ctx.setTransform(1,0,0,1,0,0);
+  document.getElementById('flash').classList.add('go');
+  playShutter(); // 📸 camera shutter sound
+  setTimeout(()=>document.getElementById('flash').classList.remove('go'),120);
+  previewImgs[curSlot]=null;
+  photos[curSlot]=wc.toDataURL('image/jpeg',0.94);
+  const need=LAYOUTS[selLayout].photosRequired||4;
+  if(curSlot<need-1)curSlot++;
+  renderSlots();updatePreview(true);
+  const n=photos.slice(0,need).filter(Boolean).length;
+  setStatus(`Foto ${n}/${need} diambil${n<need?' — lanjutkan':'! Siap diunduh'}`);
+}
+
+function retake(){previewImgs[curSlot]=null;photos[curSlot]=null;renderSlots();updatePreview(true);setStatus(`Slot ${curSlot+1} dikosongkan`);}
+function resetAll(){photos=[null,null,null,null,null,null];previewImgs=[null,null,null,null,null,null];curSlot=0;renderSlots();updatePreview(true);setStatus('Reset — sesi baru dimulai');}
+
+// ══════════════════════════════════════════════════════════════
+// DOWNLOAD / SHARE
+// ══════════════════════════════════════════════════════════════
+async function generateFull(){
+  setStatus('Merender resolusi penuh...');
+  const L=LAYOUTS[selLayout];
+  const oc=document.createElement('canvas');
+  oc.width=L.W;oc.height=L.H;
+  const ctx=oc.getContext('2d');
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.globalAlpha=1;
+  ctx.globalCompositeOperation='source-over';
+  const imgs=await Promise.all(photos.map(src=>src?loadImg(src):Promise.resolve(null)));
+  await L.render(ctx,imgs,getO());
+  ctx.globalAlpha=1;
+  ctx.globalCompositeOperation='source-over';
+  return oc;
+}
+
+async function downloadStrip(){
+  try{const oc=await generateFull();const a=document.createElement('a');a.download='foto-berita-'+Date.now()+'.png';a.href=oc.toDataURL('image/png');a.click();setStatus('✦ Berhasil diunduh!');}
+  catch(e){setStatus('Error: '+e.message);}
+}
+
+async function shareStrip(){
+  try{
+    const oc=await generateFull();
+    oc.toBlob(async b=>{
+      if(navigator.share&&navigator.canShare&&navigator.canShare({files:[new File([b],'fb.png',{type:'image/png'})]})){
+        await navigator.share({files:[new File([b],'foto-berita.png',{type:'image/png'})]});
+      } else {const a=document.createElement('a');a.download='foto-berita-'+Date.now()+'.png';a.href=oc.toDataURL('image/png');a.click();}
+    },'image/png');
+  }catch(e){setStatus('Error: '+e.message);}
+}
+
+// ══════════════════════════════════════════════════════════════
+// MODAL
+// ══════════════════════════════════════════════════════════════
+function openModal(){
+  const pc=document.getElementById('preview-canvas');
+  document.getElementById('modal-img').src=pc.toDataURL('image/jpeg',.95);
+  document.getElementById('modal-title').textContent=LAYOUTS[selLayout].name;
+  document.getElementById('modal-bg').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(){document.getElementById('modal-bg').classList.remove('open');document.body.style.overflow='';}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+// ══════════════════════════════════════════════════════════════
+// STATUS
+// ══════════════════════════════════════════════════════════════
+function setStatus(msg){document.getElementById('status-txt').textContent=msg;}
+document.getElementById('footer-year').textContent='© Snapcan '+new Date().getFullYear()+' — All Rights Reserved';
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+renderThumbs();
+renderSlots();
+updatePreview(true);
+</script>
+</body>
+</html>
